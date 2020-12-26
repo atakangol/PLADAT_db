@@ -156,8 +156,94 @@ def update_student_city(student_id,city_id):
         connection.close()
         
     return (flag,id)
+def update_student_department(student_id,department_id):
+    connection = db.connect(url)
+    cursor = connection.cursor()
+    statement = """UPDATE public."STUDENTS"
+	SET "DEPARTMENT"={}
+	WHERE "ID"={} returning "ID";""".format(department_id,student_id)
 
+    try:
+        cursor.execute(statement)
+        res = cursor.fetchall()
+        #print(len(res))
+        connection.commit()
 
+        '''
+        if len(res) == 0:
+            "no student with this id" 
+            #return (false,student_id)
+            id=student_id
+            flag=False'''
+        
+        flag = True
+        try:
+
+            id = res[0][0]
+        except:
+            "no student with this id" 
+            #return (false,student_id)
+            id=student_id
+            flag=False
+
+    except Exception as err:
+        # pass exception to function
+        print_psycopg2_exception(err)
+        if (err.pgcode == "23503"):
+            print("no department with this id found")
+            id=-1
+            flag=False
+    
+    #print(id)
+    finally:
+        cursor.close()
+        connection.close()
+        
+    return (flag,id)
+def update_student_university(student_id,uni_id):
+    connection = db.connect(url)
+    cursor = connection.cursor()
+    statement = """UPDATE public."STUDENTS"
+	SET "UNIVERSITY"={}
+	WHERE "ID"={} returning "ID";""".format(uni_id,student_id)
+
+    try:
+        cursor.execute(statement)
+        res = cursor.fetchall()
+        #print(len(res))
+        connection.commit()
+
+        '''
+        if len(res) == 0:
+            "no student with this id" 
+            #return (false,student_id)
+            id=student_id
+            flag=False'''
+        
+        flag = True
+        try:
+
+            id = res[0][0]
+        except:
+            "no student with this id" 
+            #return (false,student_id)
+            id=student_id
+            flag=False
+
+    except Exception as err:
+        # pass exception to function
+        print_psycopg2_exception(err)
+        if (err.pgcode == "23503"):
+            print("no uni with this id found")
+            id=-1
+            flag=False
+    
+    #print(id)
+    finally:
+        cursor.close()
+        connection.close()
+        
+    return (flag,id)
 
 #departments and universities
 def add_department(name,faculty):
@@ -221,15 +307,53 @@ def search_department(term):
     results = cursor.fetchall()
     return results
 
+def add_university(name,city_id):
+    connection = db.connect(url)
+    cursor = connection.cursor()
+    statement = """INSERT INTO public."UNIVERSITIES"(
+	 "NAME", "CITY")
+	VALUES ( '{}',{}) RETURNING "ID";""".format(name.title(),city_id)
+    try:
+        cursor.execute(statement)
+        id = cursor.fetchone()
+        #print(id)
+        id = id[0]
+        connection.commit()
+        flag=True
+    except Exception as err:
+        # pass exception to function
+        #print_psycopg2_exception(err)
+        if (err.pgcode == "23505"):
+            print("this university already exists")
+            id=-1
+            flag=False
+        elif (err.pgcode == "23503"):
+            print("no city with this id found")
+            id=-1
+            flag=False
+        flag=False
+    finally:
+        cursor.close()
+        connection.close()
 
-
-
+    return (flag,id)
+def search_university(term):
+    '''searches in the name '''
+    connection = db.connect(url)
+    cursor = connection.cursor()
+    statement = """ select "UNIVERSITIES"."ID","UNIVERSITIES"."NAME","CITIES"."COUNTRY","CITIES"."NAME" 
+    from "UNIVERSITIES" inner join "CITIES" ON ("UNIVERSITIES"."CITY" = "CITIES"."ID")
+	where "UNIVERSITIES"."NAME" ilike '%{a}%';""".format(a=term.lower())
+    cursor.execute(statement)
+    results = cursor.fetchall()
+    return results
 
 if __name__ == "__main__":
     #kk = get_all_cities()
     #print(student_login("example@mail.com","ataka"))
     #print(update_student_city(1,2))
     #student_signup("example@mail.com","asdas","45581222")
-    print(add_department("mathematical engineering","Engineering"))
+    #print(search_university("ber"))
+    print(update_student_university(4,1))
 
 
