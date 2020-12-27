@@ -123,7 +123,7 @@ def update_student_city(student_id,city_id):
     try:
         cursor.execute(statement)
         res = cursor.fetchall()
-        print(len(res))
+        #print(len(res))
         connection.commit()
 
         '''
@@ -348,12 +348,127 @@ def search_university(term):
     results = cursor.fetchall()
     return results
 
+#skills
+def add_skill(name,desc=None):
+    connection = db.connect(url)
+    cursor = connection.cursor()
+    if desc:
+        statement = """INSERT INTO public."SKILLS"(
+        "NAME", "DESCRIPTION")
+        VALUES ( '{}','{}') RETURNING "ID";""".format(name.title(),desc)
+    else:
+        statement = """INSERT INTO public."SKILLS"(
+        "NAME")
+        VALUES ( '{}') RETURNING "ID";""".format(name.title())
+    try:
+        cursor.execute(statement)
+        id = cursor.fetchone()
+        #print(id)
+        id = id[0]
+        connection.commit()
+        flag=True
+    except Exception as err:
+        # pass exception to function
+        print_psycopg2_exception(err)
+        
+        
+        flag=False
+    finally:
+        cursor.close()
+        connection.close()
+
+    return (flag,id)
+def search_skill(term):
+    '''searches in both the name and the description'''
+    connection = db.connect(url)
+    cursor = connection.cursor()
+    statement = """ SELECT "ID", "NAME", "DESCRIPTION"
+	FROM public."SKILLS"
+	where "NAME" ilike '%{a}%' or "DESCRIPTION" ilike '%{a}%';""".format(a=term.lower())
+    cursor.execute(statement)
+    results = cursor.fetchall()
+    return results
+def add_student_skill(student_id,skill_id):
+    connection = db.connect(url)
+    cursor = connection.cursor()
+    statement = """INSERT INTO public."STUDENT_SKILL"(
+	"STU_ID", "SKILL_ID")
+	VALUES ({}, {}) RETURNING "ID";""".format(student_id,skill_id)
+
+    try:
+        cursor.execute(statement)
+        res = cursor.fetchall()
+        #print(len(res))
+        connection.commit()
+        flag = True
+        try:
+
+            id = res[0][0]
+        except:
+            print("no student with this id" )
+            #return (false,student_id)
+            id=student_id
+            flag=False
+
+    except Exception as err:
+        # pass exception to function
+        #print_psycopg2_exception(err)
+        if (err.pgcode == "23503"):
+            print("this skill or student doesnt exist")
+            id=-1
+            flag=False
+        if (err.pgcode == "23505"):
+            print("this student already has this skill")
+            id=-1
+            flag=False
+        id=-1
+        flag=False
+    
+    #print(id)
+    finally:
+        cursor.close()
+        connection.close()
+        
+    return (flag,id)
+def remove_student_skill(student_id,skill_id):
+    connection = db.connect(url)
+    cursor = connection.cursor()
+    statement = """DELETE FROM public."STUDENT_SKILL"
+	WHERE "STU_ID"={} AND "SKILL_ID"={};""".format(student_id,skill_id)
+    try:
+        cursor.execute(statement)
+        connection.commit()
+        flag = True
+    except Exception as err:
+        # pass exception to function
+        print_psycopg2_exception(err)
+        flag=False
+    finally:
+        cursor.close()
+        connection.close()
+        
+    return flag
+
+
+
+#applications
+#direction true = job offer by company to student
+#direction false = student application to company
+
+
+
+
+
+
+
 if __name__ == "__main__":
     #kk = get_all_cities()
     #print(student_login("example@mail.com","ataka"))
     #print(update_student_city(1,2))
     #student_signup("example@mail.com","asdas","45581222")
     #print(search_university("ber"))
-    print(update_student_university(4,1))
-
+    #print(update_student_university(4,1))
+    #print(remove_student_skill(10,12))
+    #add_skill("Excel")
+    add_student_skill(4,3)
 
