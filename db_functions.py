@@ -3,7 +3,7 @@ import sys
 import json
 
 
-url  = "dbname='PlaDat' user='postgres' host='localhost' password='45581222'"
+url  = "dbname='PlaDat' user='postgres' host='localhost' password='0707'"
 
 def print_psycopg2_exception(err):
     err_type, err_obj, traceback = sys.exc_info()
@@ -75,7 +75,6 @@ def student_signup(email,name,password):
     statement = """INSERT INTO public."STUDENTS"(
 	"EMAIL", "PASSWORD", "NAME")
 	VALUES ('{}', '{}', '{}') RETURNING "ID";""".format(email,password,name)
-
     try:
         cursor.execute(statement)
         id = cursor.fetchone()
@@ -89,13 +88,10 @@ def student_signup(email,name,password):
             print("this email is already in use")
             id=-1
             flag=False
-    
     #print(id)
     finally:
         cursor.close()
         connection.close()
-        
-
     return (flag,id)
 def student_login(email,pw):
     connection = db.connect(url)
@@ -394,7 +390,6 @@ def add_student_skill(student_id,skill_id):
     statement = """INSERT INTO public."STUDENT_SKILL"(
 	"STU_ID", "SKILL_ID")
 	VALUES ({}, {}) RETURNING "ID";""".format(student_id,skill_id)
-
     try:
         cursor.execute(statement)
         res = cursor.fetchall()
@@ -450,15 +445,123 @@ def remove_student_skill(student_id,skill_id):
     return flag
 
 
+#company profile
+def company_signup(email,name,password, excname, excdob): #without exc_id 
+    connection = db.connect(url)
+    cursor = connection.cursor()
+    statement = """INSERT INTO public."COMPANIES"(
+	"EMAIL", "PASSWORD", "NAME", "EXC_NAME", "EXC_DOB")
+	VALUES ('{}', '{}', '{}', '{}', '{}') RETURNING "ID" ;""".format(email,password,name, excname, excdob)
+    try:
+        cursor.execute(statement)
+        id = cursor.fetchone()
+        #excid = cursor.fetchone()
+        connection.commit()
+        id = int(id[0])
+        #excid = int(id[0])
+        flag=True
+    except Exception as err:
+        if (err.pgcode == "23505"):
+            print("this email is already in use")
+            id=-1
+            #excid = -1
+            flag=False
+    finally:
+        cursor.close()
+        connection.close()
+    return (flag,id)
+def company_login(email,pw):
+    connection = db.connect(url)
+    cursor = connection.cursor()
+    statement = """SELECT "ID" FROM public."COMPANIES" where "EMAIL" = '{}' and "PASSWORD"='{}';""".format(email,pw)
+    cursor.execute(statement)
+    result = cursor.fetchone()
+    if result:
+        return (True,int(result[0]))
+    statement = """SELECT "ID" FROM public."COMPANIES" where "EMAIL" = '{}' ;""".format(email)
+    if result:
+        print('wrong password')
+        return (False,int(result[0]))
+    print("Company doesn't exist")
+    return(False,-1)    
+def update_company_city(company_id,city_id):
+    connection = db.connect(url)
+    cursor = connection.cursor()
+    statement = """UPDATE public."COMPANIES"
+	SET "CITY"={}
+	WHERE "ID"={} returning "ID";""".format(city_id,company_id)
+    try:
+        cursor.execute(statement)
+        res = cursor.fetchall()
+        connection.commit()
+        flag = True
+        try:
+            id = res[0][0]
+        except:
+            id=student_id
+            flag=False
+    except Exception as err:
+        if (err.pgcode == "23503"):
+            print("No city with this id found")
+            id=-1
+            flag=False
+    finally:
+        cursor.close()
+        connection.close()
+    return (flag,id)
+
+#job listings
+def add_job_listing(company_id, description=None):
+    connection = db.connect(url)
+    cursor = connection.cursor()
+    if description:
+        statement = """INSERT INTO public."JOB_LISTINGS"("COMPANY","DESCRIPTION")
+        VALUES ( '{}','{}') RETURNING "ID";""".format(company_id, description)
+    else:
+        statement = """INSERT INTO public."JOB_LISTINGS"("COMPANY")
+        VALUES ( '{}') RETURNING "ID";""".format(company_id)
+    try:
+        cursor.execute(statement)
+        id = cursor.fetchone()
+        id = id[0]
+        connection.commit()
+        flag=True
+    except Exception as err:
+        print_psycopg2_exception(err)
+        flag=False
+    finally:
+        cursor.close()
+        connection.close()
+    return (flag,id)
+def update_joblisting_location(joblisting_id,city_id):
+    connection = db.connect(url)
+    cursor = connection.cursor()
+    statement = """UPDATE public."JOB_LISTINGS"
+	SET "LOCATION"={}
+	WHERE "ID"={} returning "ID";""".format(city_id,joblisting_id)
+    try:
+        cursor.execute(statement)
+        res = cursor.fetchall()
+        connection.commit()
+        flag = True
+        try:
+            id = res[0][0]
+        except:
+            id=student_id
+            flag=False
+    except Exception as err:
+        if (err.pgcode == "23503"):
+            print("No city with this id found")
+            id=-1
+            flag=False
+    finally:
+        cursor.close()
+        connection.close()
+    return (flag,id)
 
 #applications
 #direction true = job offer by company to student
 #direction false = student application to company
-
-
-
-
-
 
 
 if __name__ == "__main__":
@@ -469,6 +572,12 @@ if __name__ == "__main__":
     #print(search_university("ber"))
     #print(update_student_university(4,1))
     #print(remove_student_skill(10,12))
-    #add_skill("Excel")
-    add_student_skill(4,3)
-
+    #add_skill("Excel3")
+    #add_student_skill(4,3)
+    
+    #company_signup("AWS@mail.com","aws","password","dummy aws", "01/01/99")
+    #print(company_login("AWS@mail.com", "password"))
+    #print(company_login("yanlis@mail.com", "password"))
+    #print(update_company_city(1,3))
+    #add_job_listing(1, "a nice company :D")
+    #print( update_joblisting_location(1,3 ))
