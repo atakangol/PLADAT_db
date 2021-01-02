@@ -240,6 +240,34 @@ def update_student_university(student_id,uni_id):
         connection.close()
         
     return (flag,id)
+def get_user_details(user_id): #fix empty query
+    '''spesik öğrencinin 
+        (id, name universite bölüm fakülte yaşadığı şehir
+        liste halinde skill:açıklama(boş gelebilir) )
+        '''
+
+    connection = db.connect(url)
+    cursor = connection.cursor()    
+    statement ="""select 
+    S."ID" as id,
+    S."NAME" as name,
+    U."NAME" as university,
+    D."NAME" as department,
+    D."FACULTY" as faculty,
+    C."NAME" as student_city,
+	ARRAY_AGG( concat(SK."NAME", ':' ,SK."DESCRIPTION")) as skill_list
+    from "STUDENTS" S 
+    inner join "STUDENT_SKILL" SS on S."ID" = SS."STU_ID" 
+    inner join "SKILLS" SK on SS."SKILL_ID" = SK."ID"
+    inner join "UNIVERSITIES" U on U."ID"=S."UNIVERSITY"
+    inner join "DEPARTMENTS" D on D."ID"=S."DEPARTMENT"
+    inner join "CITIES" C on 	C."ID"=S."CITY"
+	where S."ID" = {}
+    GROUP BY S."ID",S."NAME",U."NAME",D."NAME",D."FACULTY",C."NAME"
+    """.format(user_id)
+    cursor.execute(statement)
+    result = cursor.fetchone()
+    return(result)
 
 #departments and universities
 def add_department(name,faculty):
@@ -574,7 +602,7 @@ def update_joblisting_location(joblisting_id,city_id):
 
 
 if __name__ == "__main__":
-    #kk = get_all_cities()
+    #print(add_university("university of paris",17) )
     #print(student_login("example@mail.com","ataka"))
     #print(update_student_city(1,2))
     #student_signup("example@mail.com","asdas","45581222")
@@ -590,7 +618,5 @@ if __name__ == "__main__":
     #print(update_company_city(1,3))
     #add_job_listing(1, "a nice company :D")
     #print( update_joblisting_location(1,3 ))
-
-    #company verification
-    f, id_, verification = company_signup("apple234@mail.com","apple234","password","dummy apple", "01/01/99")
-    print(company_login("apple234@mail.com", "password", verification))
+    #print(       search_students_by_skill_ids( (1,5) )        )
+    print(get_user_details(4))
