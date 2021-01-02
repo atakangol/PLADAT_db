@@ -75,7 +75,6 @@ def student_signup(email,name,password):
     statement = """INSERT INTO public."STUDENTS"(
 	"EMAIL", "PASSWORD", "NAME")
 	VALUES ('{}', '{}', '{}') RETURNING "ID";""".format(email,password,name)
-
     try:
         cursor.execute(statement)
         id = cursor.fetchone()
@@ -89,13 +88,10 @@ def student_signup(email,name,password):
             print("this email is already in use")
             id=-1
             flag=False
-    
     #print(id)
     finally:
         cursor.close()
         connection.close()
-        
-
     return (flag,id)
 def student_login(email,pw):
     connection = db.connect(url)
@@ -244,34 +240,6 @@ def update_student_university(student_id,uni_id):
         connection.close()
         
     return (flag,id)
-def get_user_details(user_id):
-    '''spesik öğrencinin 
-        (id, name universite bölüm fakülte yaşadığı şehir
-        liste halinde skill:açıklama(boş gelebilir) )
-        '''
-
-    connection = db.connect(url)
-    cursor = connection.cursor()    
-    statement ="""select 
-    S."ID" as id,
-    S."NAME" as name,
-    U."NAME" as university,
-    D."NAME" as department,
-    D."FACULTY" as faculty,
-    C."NAME" as student_city,
-	ARRAY_AGG( concat(SK."NAME", ':' ,SK."DESCRIPTION")) as skill_list
-    from "STUDENTS" S 
-    inner join "STUDENT_SKILL" SS on S."ID" = SS."STU_ID" 
-    inner join "SKILLS" SK on SS."SKILL_ID" = SK."ID"
-    inner join "UNIVERSITIES" U on U."ID"=S."UNIVERSITY"
-    inner join "DEPARTMENTS" D on D."ID"=S."DEPARTMENT"
-    inner join "CITIES" C on 	C."ID"=S."CITY"
-	where S."ID" = {}
-    GROUP BY S."ID",S."NAME",U."NAME",D."NAME",D."FACULTY",C."NAME"
-    """.format(user_id)
-    cursor.execute(statement)
-    result = cursor.fetchone()
-    return(result)
 
 #departments and universities
 def add_department(name,faculty):
@@ -377,7 +345,7 @@ def search_university(term):
     return results
 
 #skills
-def add_skill(name,desc=None): #error codes
+def add_skill(name,desc=None):
     connection = db.connect(url)
     cursor = connection.cursor()
     if desc:
@@ -422,7 +390,6 @@ def add_student_skill(student_id,skill_id):
     statement = """INSERT INTO public."STUDENT_SKILL"(
 	"STU_ID", "SKILL_ID")
 	VALUES ({}, {}) RETURNING "ID";""".format(student_id,skill_id)
-
     try:
         cursor.execute(statement)
         res = cursor.fetchall()
@@ -477,79 +444,6 @@ def remove_student_skill(student_id,skill_id):
         
     return flag
 
-def search_students_by_skill(term):
-    '''skilllerde ve açıklamalırında arama yapıp  
-        öğrencileri liste halinde
-        (id, name universite bölüm fakülte yaşadığı şehir
-        liste halinde skill:açıklama(boş gelebilir) )'''
-
-    connection = db.connect(url)
-    cursor = connection.cursor()
-    statement = """select 
-    id,name,university,department,faculty,student_city,
-    ARRAY_AGG( concat(skills."NAME", ':' ,skills."DESCRIPTION")) as skill_list
-    from (select 
-    S."ID" as id,
-    S."NAME" as name,
-    U."NAME" as university,
-    D."NAME" as department,
-    D."FACULTY" as faculty,
-    C."NAME" as student_city
-    from "STUDENTS" S 
-    inner join "STUDENT_SKILL" SS on S."ID" = SS."STU_ID" 
-    inner join "SKILLS" SK on SS."SKILL_ID" = SK."ID"
-    inner join "UNIVERSITIES" U on U."ID"=S."UNIVERSITY"
-    inner join "DEPARTMENTS" D on D."ID"=S."DEPARTMENT"
-    inner join "CITIES" C on 	C."ID"=S."CITY"
-    where SK."NAME" ilike '%{t}%' or SK."DESCRIPTION" ilike '%{t}%'
-    GROUP BY S."ID",S."NAME",U."NAME",D."NAME",D."FACULTY",C."NAME"
-    ) as res 
-    inner join "STUDENT_SKILL" SS1 on id = SS1."STU_ID"
-    inner join "SKILLS" skills on SS1."SKILL_ID" = skills."ID"
-    GROUP BY id,name,university,department,faculty,student_city;
-    """.format(t=term)
-    cursor.execute(statement)
-    results = cursor.fetchall()
-    return(results)
-def search_students_by_skill_ids(ids):
-    '''idleri tuple olarak alır 1 taneyse int olabilir
-    verilen idlerin herhangi birine sahip olan  
-        öğrencileri liste halinde
-        (id, name universite bölüm fakülte yaşadığı şehir
-        liste halinde skill:açıklama(boş gelebilir) )'''
-
-    if isinstance(ids, int):
-        tup = '(' + str(ids) + ')'
-    else:
-        tup = str( tuple(ids) )
-    connection = db.connect(url)
-    cursor = connection.cursor()
-    statement = """select 
-    id,name,university,department,faculty,student_city,
-    ARRAY_AGG( concat(skills."NAME", ':' ,skills."DESCRIPTION")) as skill_list
-    from (select 
-    S."ID" as id,
-    S."NAME" as name,
-    U."NAME" as university,
-    D."NAME" as department,
-    D."FACULTY" as faculty,
-    C."NAME" as student_city
-    from "STUDENTS" S 
-    inner join "STUDENT_SKILL" SS on S."ID" = SS."STU_ID" 
-    inner join "SKILLS" SK on SS."SKILL_ID" = SK."ID"
-    inner join "UNIVERSITIES" U on U."ID"=S."UNIVERSITY"
-    inner join "DEPARTMENTS" D on D."ID"=S."DEPARTMENT"
-    inner join "CITIES" C on 	C."ID"=S."CITY"
-    where SS."SKILL_ID" in {}
-    GROUP BY S."ID",S."NAME",U."NAME",D."NAME",D."FACULTY",C."NAME"
-    ) as res 
-    inner join "STUDENT_SKILL" SS1 on id = SS1."STU_ID"
-    inner join "SKILLS" skills on SS1."SKILL_ID" = skills."ID"
-    GROUP BY id,name,university,department,faculty,student_city;
-    """.format(tup)
-    cursor.execute(statement)
-    results = cursor.fetchall()
-    return(results)
 
 #company profile
 def company_signup(email,name,password, excname, excdob): #without exc_id 
@@ -575,13 +469,22 @@ def company_signup(email,name,password, excname, excdob): #without exc_id
     finally:
         cursor.close()
         connection.close()
-    return (flag,id)
-def company_login(email,pw):
+    verification = False
+    return (flag,id, verification)
+def is_verified_company(v):
+    #admin companyyi verified etmeli
+    v = True
+    return v
+
+def company_login(email,pw, verification ):
     connection = db.connect(url)
     cursor = connection.cursor()
     statement = """SELECT "ID" FROM public."COMPANIES" where "EMAIL" = '{}' and "PASSWORD"='{}';""".format(email,pw)
     cursor.execute(statement)
     result = cursor.fetchone()
+    if is_verified_company(verification) == False :
+        print('company not verified')
+        return (False,int(result[0]))
     if result:
         return (True,int(result[0]))
     statement = """SELECT "ID" FROM public."COMPANIES" where "EMAIL" = '{}' ;""".format(email)
@@ -680,12 +583,14 @@ if __name__ == "__main__":
     #print(remove_student_skill(10,12))
     #add_skill("Excel3")
     #add_student_skill(4,3)
-    
+
     #company_signup("AWS@mail.com","aws","password","dummy aws", "01/01/99")
     #print(company_login("AWS@mail.com", "password"))
     #print(company_login("yanlis@mail.com", "password"))
     #print(update_company_city(1,3))
     #add_job_listing(1, "a nice company :D")
     #print( update_joblisting_location(1,3 ))
-    #print(       search_students_by_skill_ids( (1,5) )        )
-    print(get_user_details(1))
+
+    #company verification
+    f, id_, verification = company_signup("apple234@mail.com","apple234","password","dummy apple", "01/01/99")
+    print(company_login("apple234@mail.com", "password", verification))
