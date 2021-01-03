@@ -317,6 +317,10 @@ def search_university():
     ret = {"universities":t }
     return (jsonify(ret))
 
+
+
+
+
 if __name__ == "__main__":
     app.run(debug=True,port=9090)
 

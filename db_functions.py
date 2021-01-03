@@ -21,6 +21,29 @@ def print_psycopg2_exception(err):
     print ("pgerror:", err.pgerror)
     print ("pgcode:", err.pgcode, "\n")
 
+def test(t):
+    global url
+    print(url)
+    url = t
+    print(url)
+    return (url)
+
+def create_tables():
+    #temp_url = "dbname='PlaDat2' user='postgres' host='localhost' password='45581222'"
+    with open("PlaDat.sql","r") as sql:
+        temp = sql.readlines()
+    statement = ""
+    for ii in temp:
+        statement += ii +" "
+    print(statement)
+    
+    connection = db.connect(url)
+    cursor = connection.cursor()
+    cursor.execute(statement)
+    connection.commit()
+    cursor.close()
+    connection.close()
+    
 
 #city
 def insert_city(country,name):
@@ -268,7 +291,29 @@ def get_student_details(user_id): #fix empty query
     cursor.execute(statement)
     result = cursor.fetchone()
     return(result)
+def update_student_pref(stu_id,pref):
+    connection = db.connect(url)
+    cursor = connection.cursor()
+    statement = """UPDATE public."STUDENTS"
+	SET "EMP_PREF"= '{}'
+	WHERE "ID"={} returning "ID";""".format(pref,stu_id)
+    
+    cursor.execute(statement)
+    res = cursor.fetchall()
+    #print(len(res))
+    connection.commit()
+    try:
 
+        #id = res[0][0]
+        flag= True
+    except:
+        print( "no student with this id" )
+        #return (false,student_id)
+        #id=stu_id
+        flag=False
+    cursor.close()
+    connection.close()
+    return (flag,stu_id)
 #departments and universities
 def add_department(name,faculty):
     connection = db.connect(url)
@@ -708,12 +753,13 @@ if __name__ == "__main__":
     #print(remove_student_skill(10,12))
     #add_skill("Excel3")
     #add_student_skill(4,3)
-
+    #print(update_student_pref(10,"fulltime"))
     #company_signup("AWS@mail.com","aws","password","dummy aws", "01/01/99")
     #print(company_login("AWS@mail.com", "password"))
     #print(company_login("yanlis@mail.com", "password"))
     #print(update_company_city(1,3))
     #add_job_listing(1, "a nice company :D")
     #print( update_joblisting_location(1,3 ))
-    print(       search_students_by_skill_ids( 7 )        )
+    #print(       search_students_by_skill_ids( 7 )        )
     #print(get_user_details(4))
+    create_tables()
