@@ -3,7 +3,7 @@ import sys
 import json
 
 
-url  = "dbname='PlaDat' user='postgres' host='localhost' password='0707'"
+url  = "dbname='PlaDat' user='postgres' host='localhost' password='45581222'"
 
 def print_psycopg2_exception(err):
     err_type, err_obj, traceback = sys.exc_info()
@@ -240,7 +240,7 @@ def update_student_university(student_id,uni_id):
         connection.close()
         
     return (flag,id)
-def get_user_details(user_id): #fix empty query
+def get_student_details(user_id): #fix empty query
     '''spesik öğrencinin 
         (id, name universite bölüm fakülte yaşadığı şehir
         liste halinde skill:açıklama(boş gelebilir) )
@@ -257,11 +257,11 @@ def get_user_details(user_id): #fix empty query
     C."NAME" as student_city,
 	ARRAY_AGG( concat(SK."NAME", ':' ,SK."DESCRIPTION")) as skill_list
     from "STUDENTS" S 
-    inner join "STUDENT_SKILL" SS on S."ID" = SS."STU_ID" 
-    inner join "SKILLS" SK on SS."SKILL_ID" = SK."ID"
-    inner join "UNIVERSITIES" U on U."ID"=S."UNIVERSITY"
-    inner join "DEPARTMENTS" D on D."ID"=S."DEPARTMENT"
-    inner join "CITIES" C on 	C."ID"=S."CITY"
+    left join "STUDENT_SKILL" SS on S."ID" = SS."STU_ID" 
+    left join "SKILLS" SK on SS."SKILL_ID" = SK."ID"
+    left join "UNIVERSITIES" U on U."ID"=S."UNIVERSITY"
+    left join "DEPARTMENTS" D on D."ID"=S."DEPARTMENT"
+    left join "CITIES" C on 	C."ID"=S."CITY"
 	where S."ID" = {}
     GROUP BY S."ID",S."NAME",U."NAME",D."NAME",D."FACULTY",C."NAME"
     """.format(user_id)
@@ -371,19 +371,40 @@ def search_university(term):
     cursor.execute(statement)
     results = cursor.fetchall()
     return results
+def all_unis():
+    connection = db.connect(url)
+    cursor = connection.cursor()
+    statement = """ SELECT 
+    "UNIVERSITIES"."ID",
+    "UNIVERSITIES"."NAME",
+    "CITIES"."NAME",
+    "CITIES"."COUNTRY"
+	FROM public."UNIVERSITIES"
+	inner join "CITIES" ON "UNIVERSITIES"."CITY" = "CITIES"."ID" """
+    cursor.execute(statement)
+    results = cursor.fetchall()
+    return results
 
 #skills
+def get_all_skills():
+    connection = db.connect(url)
+    cursor = connection.cursor()
+    statement = """ SELECT *
+	FROM public."SKILLS" """
+    cursor.execute(statement)
+    results = cursor.fetchall()
+    return results
 def add_skill(name,desc=None):
     connection = db.connect(url)
     cursor = connection.cursor()
     if desc:
         statement = """INSERT INTO public."SKILLS"(
         "NAME", "DESCRIPTION")
-        VALUES ( '{}','{}') RETURNING "ID";""".format(name.title(),desc)
+        VALUES ( '{}','{}') RETURNING "ID";""".format(name,desc.title())
     else:
         statement = """INSERT INTO public."SKILLS"(
         "NAME")
-        VALUES ( '{}') RETURNING "ID";""".format(name.title())
+        VALUES ( '{}') RETURNING "ID";""".format(name)
     try:
         cursor.execute(statement)
         id = cursor.fetchone()
@@ -472,6 +493,82 @@ def remove_student_skill(student_id,skill_id):
         
     return flag
 
+def search_students_by_skill(term):
+    '''skilllerde ve açıklamalırında arama yapıp 
+        öğrencileri liste halinde
+        (id, name universite bölüm fakülte yaşadığı şehir
+        liste halinde skill:açıklama(boş gelebilir) )'''
+
+    connection = db.connect(url)
+    cursor = connection.cursor()
+    statement = """select 
+    id,name,university,department,faculty,student_city,
+    ARRAY_AGG( concat(skills."NAME", ':' ,skills."DESCRIPTION")) as skill_list
+    from (select 
+    S."ID" as id,
+    S."NAME" as name,
+    U."NAME" as university,
+    D."NAME" as department,
+    D."FACULTY" as faculty,
+    C."NAME" as student_city
+    from "STUDENTS" S 
+    left join "STUDENT_SKILL" SS on S."ID" = SS."STU_ID" 
+    left join "SKILLS" SK on SS."SKILL_ID" = SK."ID"
+    left join "UNIVERSITIES" U on U."ID"=S."UNIVERSITY"
+    left join "DEPARTMENTS" D on D."ID"=S."DEPARTMENT"
+    left join "CITIES" C on 	C."ID"=S."CITY"
+    where SK."NAME" ilike '%{t}%' or SK."DESCRIPTION" ilike '%{t}%'
+    GROUP BY S."ID",S."NAME",U."NAME",D."NAME",D."FACULTY",C."NAME"
+    ) as res 
+    inner join "STUDENT_SKILL" SS1 on id = SS1."STU_ID"
+    inner join "SKILLS" skills on SS1."SKILL_ID" = skills."ID"
+    GROUP BY id,name,university,department,faculty,student_city;
+    """.format(t=term)
+    cursor.execute(statement)
+    results = cursor.fetchall()
+    return(results)
+def search_students_by_skill_ids(ids):
+    '''spesifik skillerden birine sahiğ
+        öğrencileri liste halinde
+        (id, name universite bölüm fakülte yaşadığı şehir
+        liste halinde skill:açıklama(boş gelebilir) )'''
+    
+    key = []
+    for ii in ids.split(","):
+        key.append(int(ii))
+    
+    if len(key)==1:
+        key = "("+str(key[0]) + ")"
+    else:
+        key = tuple(key)
+    connection = db.connect(url)
+    cursor = connection.cursor()
+    statement = """select 
+    id,name,university,department,faculty,student_city,
+    ARRAY_AGG( concat(skills."NAME", ':' ,skills."DESCRIPTION")) as skill_list
+    from (select 
+    S."ID" as id,
+    S."NAME" as name,
+    U."NAME" as university,
+    D."NAME" as department,
+    D."FACULTY" as faculty,
+    C."NAME" as student_city
+    from "STUDENTS" S 
+    left join "STUDENT_SKILL" SS on S."ID" = SS."STU_ID" 
+    left join "SKILLS" SK on SS."SKILL_ID" = SK."ID"
+    left join "UNIVERSITIES" U on U."ID"=S."UNIVERSITY"
+    left join "DEPARTMENTS" D on D."ID"=S."DEPARTMENT"
+    left join "CITIES" C on 	C."ID"=S."CITY"
+    where SK."ID" in {}
+    GROUP BY S."ID",S."NAME",U."NAME",D."NAME",D."FACULTY",C."NAME"
+    ) as res 
+    inner join "STUDENT_SKILL" SS1 on id = SS1."STU_ID"
+    inner join "SKILLS" skills on SS1."SKILL_ID" = skills."ID"
+    GROUP BY id,name,university,department,faculty,student_city;
+    """.format(key)
+    cursor.execute(statement)
+    results = cursor.fetchall()
+    return(results)
 
 #company profile
 def company_signup(email,name,password, excname, excdob): #without exc_id 
@@ -618,5 +715,5 @@ if __name__ == "__main__":
     #print(update_company_city(1,3))
     #add_job_listing(1, "a nice company :D")
     #print( update_joblisting_location(1,3 ))
-    #print(       search_students_by_skill_ids( (1,5) )        )
-    print(get_user_details(4))
+    print(       search_students_by_skill_ids( 7 )        )
+    #print(get_user_details(4))
