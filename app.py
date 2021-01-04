@@ -65,7 +65,8 @@ def stu_detail():
         "department":res[3],
         "faculty":res[4],
         "city":res[5],
-        "skills":res[6]
+        "emp_pref":res[6],
+        "skills":res[7]
     }
     return jsonify(ret)
 
@@ -186,7 +187,8 @@ def search_students_by_skill():
             "department":res[ii][3],
             "faculty":res[ii][4],
             "city":res[ii][5],
-            "skills":res[ii][6]
+            "emp_pref":res[ii][6],
+            "skills":res[ii][7]
         }
         t.append(s)
     ret = {"students":t }
@@ -206,7 +208,8 @@ def search_students_by_skill_ids():
             "department":res[ii][3],
             "faculty":res[ii][4],
             "city":res[ii][5],
-            "skills":res[ii][6]
+            "emp_pref":res[ii][6],
+            "skills":res[ii][7]
         }
         t.append(s)
     ret = {"students":t }
@@ -317,6 +320,91 @@ def search_university():
     ret = {"universities":t }
     return (jsonify(ret))
 
+
+
+
+#job listings
+@app.route("/all_jobs",methods=["GET"])
+def all_jobs():
+    res = db_functions.get_all_jobs()
+    t = []
+    for ii in range(len(res)):
+
+        s = {
+            "id":res[ii][0],
+            "company_id": res[ii][1],
+            "job_desc":res[ii][2],  
+            "company_name":res[ii][3],
+            "city":res[ii][4],
+            "country":res[ii][5],
+            "skill_list":res[ii][6],
+            "skill_ids":res[ii][7]
+        }
+        t.append(s)
+    ret = {"jobs":t }
+    return (jsonify(ret))
+@app.route('/search_jobs_by_skill',methods=["GET"])
+def search_jobs_by_skill():
+    term = request.args.get('term')
+    res = db_functions.search_jobs_by_skill(term)
+    #print(res)
+    t = []
+    for ii in range(len(res)):
+
+        s = {
+            "id":res[ii][0],
+            "company_id": res[ii][1],
+            "job_desc":res[ii][2],  
+            "company_name":res[ii][3],
+            "city":res[ii][4],
+            "country":res[ii][5],
+            "skill_list":res[ii][6],
+            "skill_ids":res[ii][7]
+        }
+        t.append(s)
+    ret = {"students":t }
+    return jsonify(ret)
+@app.route('/search_jobs_by_skill_ids',methods=["GET"])
+def search_jobss_by_skill_ids():
+    '''idler string halinde "1,2,3" '''
+    term = request.args.get('term')
+    res = db_functions.search_jobs_by_skill_ids(term)
+    t = []
+    for ii in range(len(res)):
+
+        s = {
+            "id":res[ii][0],
+            "company_id": res[ii][1],
+            "job_desc":res[ii][2],  
+            "company_name":res[ii][3],
+            "city":res[ii][4],
+            "country":res[ii][5],
+            "skill_list":res[ii][6],
+            "skill_ids":res[ii][7]
+        }
+        t.append(s)
+    ret = {"students":t }
+    return jsonify(ret)
+@app.route('/search_jobs',methods=["GET"])
+def search_jobs():
+    term = request.args.get('term')
+    res = db_functions.search_jobs(term)
+    t = []
+    for ii in range(len(res)):
+
+        s = {
+            "id":res[ii][0],
+            "company_id": res[ii][1],
+            "job_desc":res[ii][2],  
+            "company_name":res[ii][3],
+            "city":res[ii][4],
+            "country":res[ii][5],
+            "skill_list":res[ii][6],
+            "skill_ids":res[ii][7]
+        }
+        t.append(s)
+    ret = {"students":t }
+    return jsonify(ret)
 
 
 

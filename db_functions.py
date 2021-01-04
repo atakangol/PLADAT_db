@@ -278,6 +278,7 @@ def get_student_details(user_id): #fix empty query
     D."NAME" as department,
     D."FACULTY" as faculty,
     C."NAME" as student_city,
+    S."EMP_PREF" as preferred_emp,
 	ARRAY_AGG( concat(SK."NAME", ':' ,SK."DESCRIPTION")) as skill_list
     from "STUDENTS" S 
     left join "STUDENT_SKILL" SS on S."ID" = SS."STU_ID" 
@@ -286,7 +287,7 @@ def get_student_details(user_id): #fix empty query
     left join "DEPARTMENTS" D on D."ID"=S."DEPARTMENT"
     left join "CITIES" C on 	C."ID"=S."CITY"
 	where S."ID" = {}
-    GROUP BY S."ID",S."NAME",U."NAME",D."NAME",D."FACULTY",C."NAME"
+    GROUP BY S."ID",S."NAME",U."NAME",D."NAME",D."FACULTY",C."NAME",S."EMP_PREF"
     """.format(user_id)
     cursor.execute(statement)
     result = cursor.fetchone()
@@ -547,7 +548,7 @@ def search_students_by_skill(term):
     connection = db.connect(url)
     cursor = connection.cursor()
     statement = """select 
-    id,name,university,department,faculty,student_city,
+    id,name,university,department,faculty,student_city,preferred_emp,
     ARRAY_AGG( concat(skills."NAME", ':' ,skills."DESCRIPTION")) as skill_list
     from (select 
     S."ID" as id,
@@ -555,7 +556,8 @@ def search_students_by_skill(term):
     U."NAME" as university,
     D."NAME" as department,
     D."FACULTY" as faculty,
-    C."NAME" as student_city
+    C."NAME" as student_city,
+    S."EMP_PREF" as preferred_emp
     from "STUDENTS" S 
     left join "STUDENT_SKILL" SS on S."ID" = SS."STU_ID" 
     left join "SKILLS" SK on SS."SKILL_ID" = SK."ID"
@@ -563,11 +565,11 @@ def search_students_by_skill(term):
     left join "DEPARTMENTS" D on D."ID"=S."DEPARTMENT"
     left join "CITIES" C on 	C."ID"=S."CITY"
     where SK."NAME" ilike '%{t}%' or SK."DESCRIPTION" ilike '%{t}%'
-    GROUP BY S."ID",S."NAME",U."NAME",D."NAME",D."FACULTY",C."NAME"
+    GROUP BY S."ID",S."NAME",U."NAME",D."NAME",D."FACULTY",C."NAME",S."EMP_PREF"
     ) as res 
     inner join "STUDENT_SKILL" SS1 on id = SS1."STU_ID"
     inner join "SKILLS" skills on SS1."SKILL_ID" = skills."ID"
-    GROUP BY id,name,university,department,faculty,student_city;
+    GROUP BY id,name,university,department,faculty,student_city,preferred_emp;
     """.format(t=term)
     cursor.execute(statement)
     results = cursor.fetchall()
@@ -589,11 +591,12 @@ def search_students_by_skill_ids(ids):
     connection = db.connect(url)
     cursor = connection.cursor()
     statement = """select 
-    id,name,university,department,faculty,student_city,
+    id,name,university,department,faculty,student_city,preferred_emp,
     ARRAY_AGG( concat(skills."NAME", ':' ,skills."DESCRIPTION")) as skill_list
     from (select 
     S."ID" as id,
     S."NAME" as name,
+    S."EMP_PREF" as preferred_emp,
     U."NAME" as university,
     D."NAME" as department,
     D."FACULTY" as faculty,
@@ -605,11 +608,11 @@ def search_students_by_skill_ids(ids):
     left join "DEPARTMENTS" D on D."ID"=S."DEPARTMENT"
     left join "CITIES" C on 	C."ID"=S."CITY"
     where SK."ID" in {}
-    GROUP BY S."ID",S."NAME",U."NAME",D."NAME",D."FACULTY",C."NAME"
+    GROUP BY S."ID",S."NAME",U."NAME",D."NAME",D."FACULTY",C."NAME",S."EMP_PREF"
     ) as res 
     inner join "STUDENT_SKILL" SS1 on id = SS1."STU_ID"
     inner join "SKILLS" skills on SS1."SKILL_ID" = skills."ID"
-    GROUP BY id,name,university,department,faculty,student_city;
+    GROUP BY id,name,university,department,faculty,student_city,preferred_emp;
     """.format(key)
     cursor.execute(statement)
     results = cursor.fetchall()
@@ -738,6 +741,114 @@ def update_joblisting_location(joblisting_id,city_id):
         connection.close()
     return (flag,id)
 
+def get_all_jobs():
+    ''' job_id,company_id,job_desc,company_name,city,country,skill_list '''
+    connection = db.connect(url)
+    cursor = connection.cursor()
+    statement = """ SELECT 
+    JB."ID" ID,
+    JB."COMPANY" AS COMPANY_ID,
+    JB."DESCRIPTION" DESCRIPTION,
+    C."NAME" AS COMPANY_NAME,
+    CT."NAME" AS CITY,
+    CT."COUNTRY" AS COUNTRY,
+    ARRAY_AGG( concat(SK."NAME", ':' ,SK."DESCRIPTION")) as skill_list,
+    ARRAY_AGG(SK."ID") as skill_ids
+    FROM "JOB_LISTINGS" AS JB
+    INNER JOIN "COMPANIES" AS C ON C."ID"=JB."COMPANY"
+    INNER JOIN "CITIES" AS CT ON JB."LOCATION"=CT."ID"
+    LEFT JOIN "JOB_REQ" AS JQ ON JQ."JOB_ID"=JB."ID"
+    LEFT JOIN "SKILLS" AS SK ON SK."ID"=JQ."REQ_ID"
+    GROUP BY ID,COMPANY_ID,DESCRIPTION,COMPANY_NAME,CITY,COUNTRY """
+    cursor.execute(statement)
+    results = cursor.fetchall()
+    return results
+def search_jobs_by_skill(term):
+    connection = db.connect(url)
+    cursor = connection.cursor()
+    statement = """select * from (
+    SELECT 
+    JB."ID" ID,
+    JB."COMPANY" AS COMPANY_ID,
+    JB."DESCRIPTION" DESCRIPTION,
+    C."NAME" AS COMPANY_NAME,
+    CT."NAME" AS CITY,
+    CT."COUNTRY" AS COUNTRY,
+    ARRAY_AGG( concat(SK."NAME", ':' ,SK."DESCRIPTION")) as skill_list,
+    ARRAY_AGG(SK."ID") as skill_ids
+    FROM "JOB_LISTINGS" AS JB
+    INNER JOIN "COMPANIES" AS C ON C."ID"=JB."COMPANY"
+    INNER JOIN "CITIES" AS CT ON JB."LOCATION"=CT."ID"
+    LEFT JOIN "JOB_REQ" AS JQ ON JQ."JOB_ID"=JB."ID"
+    LEFT JOIN "SKILLS" AS SK ON SK."ID"=JQ."REQ_ID"
+    GROUP BY ID,COMPANY_ID,DESCRIPTION,COMPANY_NAME,CITY,COUNTRY
+    ) as res
+
+    where  array_to_string(skill_list, ',') ilike '%{t}%';
+    """.format(t=term.lower())
+    cursor.execute(statement)
+    results = cursor.fetchall()
+    return(results)
+def search_jobs_by_skill_ids(ids):
+    
+    key = []
+    for ii in ids.split(","):
+        key.append(int(ii))
+    
+    if len(key)==1:
+        key = "["+str(key[0]) + "]"
+    else:
+        key = list(key)
+    connection = db.connect(url)
+    cursor = connection.cursor()
+    statement = """select * from (
+    SELECT 
+    JB."ID" ID,
+    JB."COMPANY" AS COMPANY_ID,
+    JB."DESCRIPTION" DESCRIPTION,
+    C."NAME" AS COMPANY_NAME,
+    CT."NAME" AS CITY,
+    CT."COUNTRY" AS COUNTRY,
+    ARRAY_AGG( concat(SK."NAME", ':' ,SK."DESCRIPTION")) as skill_list,
+    ARRAY_AGG(SK."ID") as skill_ids
+    FROM "JOB_LISTINGS" AS JB
+    INNER JOIN "COMPANIES" AS C ON C."ID"=JB."COMPANY"
+    INNER JOIN "CITIES" AS CT ON JB."LOCATION"=CT."ID"
+    LEFT JOIN "JOB_REQ" AS JQ ON JQ."JOB_ID"=JB."ID"
+    LEFT JOIN "SKILLS" AS SK ON SK."ID"=JQ."REQ_ID"
+    GROUP BY ID,COMPANY_ID,DESCRIPTION,COMPANY_NAME,CITY,COUNTRY
+    ) as res
+    where ARRAY{} && skill_ids
+    """.format(key)
+    cursor.execute(statement)
+    results = cursor.fetchall()
+    return(results)
+def search_jobs(term):
+    ''' job_id,company_id,job_desc,company_name,city,country,skill_list '''
+    connection = db.connect(url)
+    cursor = connection.cursor()
+    statement = """ SELECT 
+    JB."ID" ID,
+    JB."COMPANY" AS COMPANY_ID,
+    JB."DESCRIPTION" DESCRIPTION,
+    C."NAME" AS COMPANY_NAME,
+    CT."NAME" AS CITY,
+    CT."COUNTRY" AS COUNTRY,
+    ARRAY_AGG( concat(SK."NAME", ':' ,SK."DESCRIPTION")) as skill_list,
+    ARRAY_AGG(SK."ID") as skill_ids
+    FROM "JOB_LISTINGS" AS JB
+    INNER JOIN "COMPANIES" AS C ON C."ID"=JB."COMPANY"
+    INNER JOIN "CITIES" AS CT ON JB."LOCATION"=CT."ID"
+    LEFT JOIN "JOB_REQ" AS JQ ON JQ."JOB_ID"=JB."ID"
+    LEFT JOIN "SKILLS" AS SK ON SK."ID"=JQ."REQ_ID"
+    where JB."DESCRIPTION" ilike '%{}%'
+    GROUP BY ID,COMPANY_ID,DESCRIPTION,COMPANY_NAME,CITY,COUNTRY """.format(term.lower())
+    cursor.execute(statement)
+    results = cursor.fetchall()
+    return results
+
+
+
 #applications
 #direction true = job offer by company to student
 #direction false = student application to company
@@ -762,4 +873,4 @@ if __name__ == "__main__":
     #print( update_joblisting_location(1,3 ))
     #print(       search_students_by_skill_ids( 7 )        )
     #print(get_user_details(4))
-    create_tables()
+    print(search_jobs_by_skill_ids("1,4"))

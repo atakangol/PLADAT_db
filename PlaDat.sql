@@ -44,7 +44,8 @@ CREATE TABLE "COMPANIES" (
   "CITY" int,
   "EXC_ID" int,
   "EXC_NAME" varchar,
-  "EXC_DOB" date
+  "EXC_DOB" date,
+  "VERIFIED" boolean
 );
 
 CREATE TABLE "JOB_LISTINGS" (
