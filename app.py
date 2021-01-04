@@ -71,19 +71,27 @@ def stu_detail():
     return jsonify(ret)
 
 #city 
-@app.route('/all_cities',methods=["GET"])
+@app.route('/cities',methods=["GET"])
 def cities():
-    res = db_functions.get_all_cities()
-    t = []
-    for ii in range(len(res)):
+    city_id = request.args.get('id')
+    if id:
+        res = db_functions.get_city(city_id)
+        ret = {"cities": [ {"id":res[0],
+                "name": res[2],
+                "country":res[1]  } ]}
+    else:
 
-        s = {
-            "id":res[ii][0],
-            "name": res[ii][2],
-            "country":res[ii][1],  
-        }
-        t.append(s)
-    ret = {"cities":t }
+        res = db_functions.get_all_cities()
+        t = []
+        for ii in range(len(res)):
+
+            s = {
+                "id":res[ii][0],
+                "name": res[ii][2],
+                "country":res[ii][1]
+            }
+            t.append(s)
+        ret = {"cities":t }
     return (jsonify(ret))
 @app.route('/search_city',methods=["GET"])
 def search_city():
@@ -406,6 +414,72 @@ def search_jobs():
     ret = {"students":t }
     return jsonify(ret)
 
+
+#applications
+#direction true = job offer by company to student
+#direction false = student application to company
+@app.route("/add_application",methods=["POST"])
+def new_application():
+    student_id = request.args.get('stu_id')
+    job_id = request.args.get('job_id')
+    direction = request.args.get('direction')
+    flag = db_functions.new_application(student_id,job_id,direction)
+
+    return jsonify({"succes":flag})
+@app.route("/delete_application",methods=["POST"])
+def delete_application():
+    student_id = request.args.get('stu_id')
+    job_id = request.args.get('job_id')
+    flag = db_functions.delete_application(student_id,job_id)
+
+    return jsonify({"succes":flag})
+@app.route("/positive_response",methods=["POST"])
+def positive_response():
+    student_id = request.args.get('stu_id')
+    job_id = request.args.get('job_id')
+    flag = db_functions.positive_response(student_id,job_id)
+
+    return jsonify({"succes":flag})
+@app.route("/applications_of_company",methods=["GET"])
+def applications_of_company():
+    company_id = request.args.get('company_id')
+    res = db_functions.get_applications_of_company(company_id)
+
+    t = []
+    for ii in range(len(res)):
+
+        s = {
+            "job_id":res[ii][0],
+            "student_id": res[ii][1],
+            "direction":res[ii][2],  
+            "response":res[ii][3],
+            "company_id":res[ii][4],
+            "description":res[ii][5],
+            "city":res[ii][6]
+        }
+        t.append(s)
+    ret = {"students":t }
+    return jsonify(ret)
+@app.route("/applications_of_student",methods=["GET"])
+def applications_of_student():
+    student_id = request.args.get('student_id')
+    res = db_functions.get_applications_of_student(student_id)
+    t = []
+    for ii in range(len(res)):
+
+        s = {
+            "job_id":res[ii][0],
+            "student_id": res[ii][1],
+            "direction":res[ii][2],  
+            "response":res[ii][3],
+            "company_id":res[ii][4],
+            "description":res[ii][5],
+            "city":res[ii][6],
+            "company_name":res[ii][7]
+        }
+        t.append(s)
+    ret = {"students":t }
+    return jsonify(ret)
 
 
 

@@ -89,7 +89,15 @@ def get_all_cities():
     cursor.execute(statement)
     results = cursor.fetchall()
     return results
-
+def get_city(city_id):
+    connection = db.connect(url)
+    cursor = connection.cursor()
+    statement = """ SELECT *
+	FROM public."CITIES" 
+    where "ID"={}; """.format(city_id)
+    cursor.execute(statement)
+    results = cursor.fetchone()
+    return results
 
 #student profile
 def student_signup(email,name,password):
@@ -853,6 +861,111 @@ def search_jobs(term):
 #direction true = job offer by company to student
 #direction false = student application to company
 
+def new_application(student_id,job_id,direction):
+    connection = db.connect(url)
+    cursor = connection.cursor()
+    statement = """INSERT INTO "APPLICATIONS" ("JOB_ID","STU_ID","DIRECTION","RESPONSE" ) 
+    VALUES ({},{},{},False) """.format(job_id,student_id,direction)
+    try:
+        cursor.execute(statement)
+        #print(len(res))
+        connection.commit()
+        flag = True
+        
+
+    except Exception as err:
+        # pass exception to function
+        #print_psycopg2_exception(err)
+        if (err.pgcode == "23503"):
+            print("this JOB or student doesnt exist")
+            flag=False
+        if (err.pgcode == "23505"):
+            print("this student - JOB COMBO EXİSTS")
+            flag=False
+        flag=False
+    
+    #print(id)
+    finally:
+        cursor.close()
+        connection.close()
+        
+    return flag
+def delete_application(student_id,job_id):
+    connection = db.connect(url)
+    cursor = connection.cursor()
+    statement = """DELETE FROM "APPLICATIONS" 
+	WHERE "STU_ID"={} AND "JOB_ID"={};""".format(student_id,job_id)
+    try:
+        cursor.execute(statement)
+        connection.commit()
+        flag = True
+    except Exception as err:
+        # pass exception to function
+        print_psycopg2_exception(err)
+        flag=False
+    finally:
+        cursor.close()
+        connection.close()
+        
+    return flag
+def positive_response(student_id,job_id):
+    connection = db.connect(url)
+    cursor = connection.cursor()
+    statement = """UPDATE "APPLICATIONS" 
+	SET "RESPONSE"=True
+	WHERE "STU_ID"={} AND "JOB_ID"={};""".format(student_id,job_id)
+    try:
+        cursor.execute(statement)
+        connection.commit()
+        flag = True
+        
+    except Exception as err:
+        if (err.pgcode == "23503"):
+            print("No application with these ids found")
+            flag=False
+    finally:
+        cursor.close()
+        connection.close()
+    return flag
+def get_applications_of_company(company_id):
+    
+    connection = db.connect(url)
+    cursor = connection.cursor()
+    statement = """SELECT 
+    "JOB_ID",
+    "STU_ID",
+    "DIRECTION",
+    "RESPONSE",
+    "COMPANY",
+    "DESCRIPTION",
+    "LOCATION" AS loc_id
+    FROM "APPLICATIONS" AS A
+    INNER JOIN "JOB_LISTINGS" AS JL ON JL."ID" = A."JOB_ID"
+    where "COMPANY"={} ; """.format(company_id)
+    cursor.execute(statement)
+    results = cursor.fetchall()
+    return results
+def get_applications_of_student(stu_id):
+    connection = db.connect(url)
+    cursor = connection.cursor()
+    statement = """SELECT 
+    "JOB_ID",
+    "STU_ID",
+    "DIRECTION",
+    "RESPONSE",
+    "COMPANY",
+    "DESCRIPTION",
+    "LOCATION" AS loc_id,
+    C."NAME" AS company_name
+
+    FROM "APPLICATIONS" AS A
+    INNER JOIN "JOB_LISTINGS" AS JL ON JL."ID" = A."JOB_ID"
+    INNER JOIN "COMPANIES" AS C ON C."ID"=JL."COMPANY"
+
+    where "STU_ID"={}; """.format(stu_id)
+    cursor.execute(statement)
+    results = cursor.fetchall()
+    return results
 
 if __name__ == "__main__":
     #print(add_university("university of paris",17) )
@@ -873,4 +986,9 @@ if __name__ == "__main__":
     #print( update_joblisting_location(1,3 ))
     #print(       search_students_by_skill_ids( 7 )        )
     #print(get_user_details(4))
-    print(search_jobs_by_skill_ids("1,4"))
+    #print(search_jobs_by_skill_ids("1,4"))
+    #print(delete_application(8,2))
+    #print(new_application(8,2,False))
+
+   for ii in get_applications_of_student(4):
+       print(ii)
