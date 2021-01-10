@@ -32,7 +32,7 @@ def ssignup():
     }
     return jsonify(ret)
 @app.route('/student_update',methods=['POST'])
-def studentupdate():
+def student_update():
     att = request.args.get("type")
     if att == "city":
 
@@ -47,6 +47,18 @@ def studentupdate():
         stu_id = request.args.get('stu_id')
         uni_id = request.args.get('uni_id')
         res = db_functions.update_student_university(stu_id,uni_id)
+    elif att=="pref":
+        stu_id = request.args.get('stu_id')
+        pref = request.args.get('emp')
+        res = db_functions.update_student_pref(stu_id,pref)
+    elif att=="age":
+        stu_id = request.args.get('stu_id')
+        age = request.args.get('age')
+        res = db_functions.update_student_age(stu_id,age)
+    elif att=="grade":
+        stu_id = request.args.get('stu_id')
+        grade = request.args.get('grade')
+        res = db_functions.update_student_grade(stu_id,grade)
     else:
         return jsonify({"flag":False})
     ret = {
@@ -66,7 +78,9 @@ def stu_detail():
         "faculty":res[4],
         "city":res[5],
         "emp_pref":res[6],
-        "skills":res[7]
+        "grade":res[7],
+        "age":res[8],
+        "skills":res[9]
     }
     return jsonify(ret)
 
@@ -196,7 +210,9 @@ def search_students_by_skill():
             "faculty":res[ii][4],
             "city":res[ii][5],
             "emp_pref":res[ii][6],
-            "skills":res[ii][7]
+            "grade":res[ii][7],
+            "age":res[ii][8],
+            "skills":res[ii][9]
         }
         t.append(s)
     ret = {"students":t }
@@ -217,7 +233,9 @@ def search_students_by_skill_ids():
             "faculty":res[ii][4],
             "city":res[ii][5],
             "emp_pref":res[ii][6],
-            "skills":res[ii][7]
+            "grade":res[ii][7],
+            "age":res[ii][8],
+            "skills":res[ii][9]
         }
         t.append(s)
     ret = {"students":t }
@@ -332,6 +350,20 @@ def search_university():
 
 
 #job listings
+@app.route("/add_job",methods=["POST"])
+def add_job_listing():
+    company_id = request.args.get('company')
+    desc = request.args.get('desc')
+    pref = request.args.get('emp_type')
+    city_id = request.args.get('city')
+    res = db_functions.add_job_listing(company_id,pref, desc)
+    ret = {
+        "flag":res[0],
+        "job_id":res[1]
+    }
+    if ret["flag"]:
+        db_functions.update_joblisting_location(ret["job_id"],city_id)
+    return jsonify(ret)
 @app.route("/all_jobs",methods=["GET"])
 def all_jobs():
     res = db_functions.get_all_jobs()
@@ -345,8 +377,9 @@ def all_jobs():
             "company_name":res[ii][3],
             "city":res[ii][4],
             "country":res[ii][5],
-            "skill_list":res[ii][6],
-            "skill_ids":res[ii][7]
+            "emp_type":res[ii][6],
+            "skill_list":res[ii][7],
+            "skill_ids":res[ii][8]
         }
         t.append(s)
     ret = {"jobs":t }
@@ -366,8 +399,9 @@ def search_jobs_by_skill():
             "company_name":res[ii][3],
             "city":res[ii][4],
             "country":res[ii][5],
-            "skill_list":res[ii][6],
-            "skill_ids":res[ii][7]
+            "emp_type":res[ii][6],
+            "skill_list":res[ii][7],
+            "skill_ids":res[ii][8]
         }
         t.append(s)
     ret = {"students":t }
@@ -387,8 +421,9 @@ def search_jobss_by_skill_ids():
             "company_name":res[ii][3],
             "city":res[ii][4],
             "country":res[ii][5],
-            "skill_list":res[ii][6],
-            "skill_ids":res[ii][7]
+            "emp_type":res[ii][6],
+            "skill_list":res[ii][7],
+            "skill_ids":res[ii][8]
         }
         t.append(s)
     ret = {"students":t }
@@ -407,8 +442,9 @@ def search_jobs():
             "company_name":res[ii][3],
             "city":res[ii][4],
             "country":res[ii][5],
-            "skill_list":res[ii][6],
-            "skill_ids":res[ii][7]
+            "emp_type":res[ii][6],
+            "skill_list":res[ii][7],
+            "skill_ids":res[ii][8]
         }
         t.append(s)
     ret = {"students":t }

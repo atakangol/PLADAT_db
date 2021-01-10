@@ -19,6 +19,8 @@ CREATE TABLE "STUDENTS" (
   "DEPARTMENT" int,
   "UNIVERSITY" int,
   "CITY" int,
+  "AGE" int,
+  "GRADE" int,
   "EMP_PREF" varchar
 );
 
@@ -52,7 +54,8 @@ CREATE TABLE "JOB_LISTINGS" (
   "ID" serial PRIMARY KEY,
   "COMPANY" int,
   "DESCRIPTION" varchar,
-  "LOCATION" int
+  "LOCATION" int,
+  "EMP_PREF" varchar
 );
 
 CREATE TABLE "JOB_REQ" (

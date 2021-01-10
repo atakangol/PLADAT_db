@@ -287,6 +287,8 @@ def get_student_details(user_id): #fix empty query
     D."FACULTY" as faculty,
     C."NAME" as student_city,
     S."EMP_PREF" as preferred_emp,
+    S."GRADE" as grade,
+    S."AGE" as age,
 	ARRAY_AGG( concat(SK."NAME", ':' ,SK."DESCRIPTION")) as skill_list
     from "STUDENTS" S 
     left join "STUDENT_SKILL" SS on S."ID" = SS."STU_ID" 
@@ -323,6 +325,53 @@ def update_student_pref(stu_id,pref):
     cursor.close()
     connection.close()
     return (flag,stu_id)
+def update_student_age(stu_id,age):
+    connection = db.connect(url)
+    cursor = connection.cursor()
+    statement = """UPDATE public."STUDENTS"
+	SET "AGE"= '{}'
+	WHERE "ID"={} returning "ID";""".format(age,stu_id)
+    
+    cursor.execute(statement)
+    res = cursor.fetchall()
+    #print(len(res))
+    connection.commit()
+    try:
+
+        #id = res[0][0]
+        flag= True
+    except:
+        print( "no student with this id" )
+        #return (false,student_id)
+        #id=stu_id
+        flag=False
+    cursor.close()
+    connection.close()
+    return (flag,stu_id)
+def update_student_grade(stu_id,grade):
+    connection = db.connect(url)
+    cursor = connection.cursor()
+    statement = """UPDATE public."STUDENTS"
+	SET "GRADE"= '{}'
+	WHERE "ID"={} returning "ID";""".format(grade,stu_id)
+    
+    cursor.execute(statement)
+    res = cursor.fetchall()
+    #print(len(res))
+    connection.commit()
+    try:
+
+        #id = res[0][0]
+        flag= True
+    except:
+        print( "no student with this id" )
+        #return (false,student_id)
+        #id=stu_id
+        flag=False
+    cursor.close()
+    connection.close()
+    return (flag,stu_id)
+
 #departments and universities
 def add_department(name,faculty):
     connection = db.connect(url)
@@ -556,7 +605,7 @@ def search_students_by_skill(term):
     connection = db.connect(url)
     cursor = connection.cursor()
     statement = """select 
-    id,name,university,department,faculty,student_city,preferred_emp,
+    id,name,university,department,faculty,student_city,preferred_emp,grade,age,
     ARRAY_AGG( concat(skills."NAME", ':' ,skills."DESCRIPTION")) as skill_list
     from (select 
     S."ID" as id,
@@ -565,6 +614,8 @@ def search_students_by_skill(term):
     D."NAME" as department,
     D."FACULTY" as faculty,
     C."NAME" as student_city,
+    S."GRADE" as grade,
+    S."AGE" as age,
     S."EMP_PREF" as preferred_emp
     from "STUDENTS" S 
     left join "STUDENT_SKILL" SS on S."ID" = SS."STU_ID" 
@@ -577,7 +628,7 @@ def search_students_by_skill(term):
     ) as res 
     inner join "STUDENT_SKILL" SS1 on id = SS1."STU_ID"
     inner join "SKILLS" skills on SS1."SKILL_ID" = skills."ID"
-    GROUP BY id,name,university,department,faculty,student_city,preferred_emp;
+    GROUP BY id,name,university,department,faculty,student_city,preferred_emp,grade,age;
     """.format(t=term)
     cursor.execute(statement)
     results = cursor.fetchall()
@@ -599,7 +650,7 @@ def search_students_by_skill_ids(ids):
     connection = db.connect(url)
     cursor = connection.cursor()
     statement = """select 
-    id,name,university,department,faculty,student_city,preferred_emp,
+    id,name,university,department,faculty,student_city,preferred_emp,grade,age,
     ARRAY_AGG( concat(skills."NAME", ':' ,skills."DESCRIPTION")) as skill_list
     from (select 
     S."ID" as id,
@@ -608,7 +659,9 @@ def search_students_by_skill_ids(ids):
     U."NAME" as university,
     D."NAME" as department,
     D."FACULTY" as faculty,
-    C."NAME" as student_city
+    C."NAME" as student_city,
+    S."GRADE" as grade,
+    S."AGE" as age
     from "STUDENTS" S 
     left join "STUDENT_SKILL" SS on S."ID" = SS."STU_ID" 
     left join "SKILLS" SK on SS."SKILL_ID" = SK."ID"
@@ -620,7 +673,7 @@ def search_students_by_skill_ids(ids):
     ) as res 
     inner join "STUDENT_SKILL" SS1 on id = SS1."STU_ID"
     inner join "SKILLS" skills on SS1."SKILL_ID" = skills."ID"
-    GROUP BY id,name,university,department,faculty,student_city,preferred_emp;
+    GROUP BY id,name,university,department,faculty,student_city,preferred_emp,grade,age;
     """.format(key)
     cursor.execute(statement)
     results = cursor.fetchall()
@@ -701,28 +754,34 @@ def update_company_city(company_id,city_id):
     return (flag,id)
 
 #job listings
-def add_job_listing(company_id, description=None):
+def add_job_listing(company_id,pref, description=None):
     connection = db.connect(url)
     cursor = connection.cursor()
     if description:
-        statement = """INSERT INTO public."JOB_LISTINGS"("COMPANY","DESCRIPTION")
-        VALUES ( '{}','{}') RETURNING "ID";""".format(company_id, description)
+        statement = """INSERT INTO public."JOB_LISTINGS" ("COMPANY","DESCRIPTION","EMP_PREF")
+        VALUES ( '{}','{}','{}') RETURNING "ID";""".format(company_id, description,pref)
     else:
-        statement = """INSERT INTO public."JOB_LISTINGS"("COMPANY")
-        VALUES ( '{}') RETURNING "ID";""".format(company_id)
+        statement = """INSERT INTO public."JOB_LISTINGS" ("COMPANY","EMP_PREF")
+        VALUES ( '{}','{}') RETURNING "ID";""".format(company_id,pref)
     try:
         cursor.execute(statement)
         id = cursor.fetchone()
         id = id[0]
         connection.commit()
         flag=True
+        cursor.close()
+        connection.close()
+        return (flag,id)
     except Exception as err:
         print_psycopg2_exception(err)
         flag=False
+        cursor.close()
+        connection.close()
+        return (flag,-1)
     finally:
         cursor.close()
         connection.close()
-    return (flag,id)
+    
 def update_joblisting_location(joblisting_id,city_id):
     connection = db.connect(url)
     cursor = connection.cursor()
@@ -749,6 +808,7 @@ def update_joblisting_location(joblisting_id,city_id):
         connection.close()
     return (flag,id)
 
+
 def get_all_jobs():
     ''' job_id,company_id,job_desc,company_name,city,country,skill_list '''
     connection = db.connect(url)
@@ -760,6 +820,7 @@ def get_all_jobs():
     C."NAME" AS COMPANY_NAME,
     CT."NAME" AS CITY,
     CT."COUNTRY" AS COUNTRY,
+    JB."EMP_PREF" AS type,
     ARRAY_AGG( concat(SK."NAME", ':' ,SK."DESCRIPTION")) as skill_list,
     ARRAY_AGG(SK."ID") as skill_ids
     FROM "JOB_LISTINGS" AS JB
@@ -782,6 +843,7 @@ def search_jobs_by_skill(term):
     C."NAME" AS COMPANY_NAME,
     CT."NAME" AS CITY,
     CT."COUNTRY" AS COUNTRY,
+    JB."EMP_PREF" AS type,
     ARRAY_AGG( concat(SK."NAME", ':' ,SK."DESCRIPTION")) as skill_list,
     ARRAY_AGG(SK."ID") as skill_ids
     FROM "JOB_LISTINGS" AS JB
@@ -817,6 +879,7 @@ def search_jobs_by_skill_ids(ids):
     C."NAME" AS COMPANY_NAME,
     CT."NAME" AS CITY,
     CT."COUNTRY" AS COUNTRY,
+    JB."EMP_PREF" AS type,
     ARRAY_AGG( concat(SK."NAME", ':' ,SK."DESCRIPTION")) as skill_list,
     ARRAY_AGG(SK."ID") as skill_ids
     FROM "JOB_LISTINGS" AS JB
@@ -842,6 +905,7 @@ def search_jobs(term):
     C."NAME" AS COMPANY_NAME,
     CT."NAME" AS CITY,
     CT."COUNTRY" AS COUNTRY,
+    JB."EMP_PREF" AS type,
     ARRAY_AGG( concat(SK."NAME", ':' ,SK."DESCRIPTION")) as skill_list,
     ARRAY_AGG(SK."ID") as skill_ids
     FROM "JOB_LISTINGS" AS JB
