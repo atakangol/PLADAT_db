@@ -515,6 +515,42 @@ def applications_of_student():
     return jsonify(ret)
 
 
+#company profile
+#signup
+#login
+@app.route('/clogin',methods=['POST'])
+def clogin():
+    email = request.args.get('email')
+    password = request.args.get('pw')
+    res = db_functions.company_login(email,password, 1)
+    ret = {
+        "flag":res[0],
+        "id":res[1]
+    }
+    return jsonify(ret)
+@app.route('/csignup',methods=['POST'])
+def csignup():
+    email = request.args.get('email')
+    name = request.args.get('name')
+    password = request.args.get('password')
+    excid = request.args.get('excid')
+    excname = request.args.get('excname')
+    excdob = request.args.get('excdob')
+    res = db_functions.company_signup(email,name,password, excid, excname, excdob)
+    ret = {
+        "flag":res[0],
+        "id":res[1]
+    }
+    return jsonify(ret)
+@app.route('/company_update',methods=['POST'])
+def company_update():
+    company_id = request.args.get('company_id')
+    city_id = request.args.get('city_id')
+    res = db_functions.update_company_city(company_id,city_id)
+    ret = {"flag":res[0],"id":res[1]}
+    return jsonify(ret)
+
+
 
 if __name__ == "__main__":
     app.run(debug=True,port=9090)
