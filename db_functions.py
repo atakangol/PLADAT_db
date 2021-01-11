@@ -680,31 +680,27 @@ def search_students_by_skill_ids(ids):
     return(results)
 
 #company profile
-def company_signup(email,name,password, excname, excdob): #without exc_id 
+def company_signup(email,name,password, excid, excname, excdob):
     connection = db.connect(url)
     cursor = connection.cursor()
     statement = """INSERT INTO public."COMPANIES"(
-	"EMAIL", "PASSWORD", "NAME", "EXC_NAME", "EXC_DOB")
-	VALUES ('{}', '{}', '{}', '{}', '{}') RETURNING "ID" ;""".format(email,password,name, excname, excdob)
+	"EMAIL", "PASSWORD", "NAME","EXC_ID", "EXC_NAME", "EXC_DOB")
+	VALUES ('{}', '{}','{}',  '{}', '{}', '{}') RETURNING "ID" ;""".format(email,password,name, excid, excname, excdob)
     try:
         cursor.execute(statement)
         id = cursor.fetchone()
-        #excid = cursor.fetchone()
         connection.commit()
         id = int(id[0])
-        #excid = int(id[0])
         flag=True
     except Exception as err:
         if (err.pgcode == "23505"):
             print("this email is already in use")
             id=-1
-            #excid = -1
             flag=False
     finally:
         cursor.close()
         connection.close()
-    verification = False
-    return (flag,id, verification)
+    return (flag,id)
 def is_verified_company(v):
     #admin companyyi verified etmeli
     v = True
@@ -726,7 +722,7 @@ def company_login(email,pw, verification ):
         print('wrong password')
         return (False,int(result[0]))
     print("Company doesn't exist")
-    return(False,-1)    
+    return(False,-1)       
 def update_company_city(company_id,city_id):
     connection = db.connect(url)
     cursor = connection.cursor()
