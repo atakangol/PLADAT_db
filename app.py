@@ -339,8 +339,8 @@ def search_university():
         s = {
             "id":res[ii][0],
             "name": res[ii][1],
-            "city":res[ii][2],  
-            "country":res[ii][3]
+            "city":res[ii][3],  
+            "country":res[ii][2]
         }
         t.append(s)
     ret = {"universities":t }
@@ -378,10 +378,10 @@ def all_jobs():
             "city":res[ii][4],
             "country":res[ii][5],
             "emp_type":res[ii][6],
-            "skill_list":res[ii][7],
-            "skill_ids":res[ii][8]
+            "skill_list":db_functions.skill_format(res[ii][7])
         }
         t.append(s)
+        
     ret = {"jobs":t }
     return (jsonify(ret))
 @app.route('/search_jobs_by_skill',methods=["GET"])
@@ -400,11 +400,10 @@ def search_jobs_by_skill():
             "city":res[ii][4],
             "country":res[ii][5],
             "emp_type":res[ii][6],
-            "skill_list":res[ii][7],
-            "skill_ids":res[ii][8]
+            "skill_list":db_functions.skill_format(res[ii][7])
         }
         t.append(s)
-    ret = {"students":t }
+    ret = {"jobs":t }
     return jsonify(ret)
 @app.route('/search_jobs_by_skill_ids',methods=["GET"])
 def search_jobss_by_skill_ids():
@@ -422,11 +421,10 @@ def search_jobss_by_skill_ids():
             "city":res[ii][4],
             "country":res[ii][5],
             "emp_type":res[ii][6],
-            "skill_list":res[ii][7],
-            "skill_ids":res[ii][8]
+            "skill_list":db_functions.skill_format(res[ii][7])
         }
         t.append(s)
-    ret = {"students":t }
+    ret = {"jobs":t }
     return jsonify(ret)
 @app.route('/search_jobs',methods=["GET"])
 def search_jobs():
@@ -443,11 +441,10 @@ def search_jobs():
             "city":res[ii][4],
             "country":res[ii][5],
             "emp_type":res[ii][6],
-            "skill_list":res[ii][7],
-            "skill_ids":res[ii][8]
+            "skill_list":db_functions.skill_format(res[ii][7])
         }
         t.append(s)
-    ret = {"students":t }
+    ret = {"jobs":t }
     return jsonify(ret)
 
 

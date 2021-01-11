@@ -43,7 +43,20 @@ def create_tables():
     connection.commit()
     cursor.close()
     connection.close()
-    
+
+def skill_format(l):
+    #print()
+    ret = []
+    for ii in l:
+        temp = ii.split(':')
+        r = {
+            "id":temp[0],
+            "name":temp[1],
+            "desc":temp[2]
+        }
+        ret.append(r)
+    #print(ret)
+    return ret
 
 #city
 def insert_city(country,name):
@@ -289,7 +302,7 @@ def get_student_details(user_id): #fix empty query
     S."EMP_PREF" as preferred_emp,
     S."GRADE" as grade,
     S."AGE" as age,
-	ARRAY_AGG( concat(SK."NAME", ':' ,SK."DESCRIPTION")) as skill_list
+	ARRAY_AGG( concat(SK."ID",':',SK."NAME", ':' ,SK."DESCRIPTION")) as skill_list
     from "STUDENTS" S 
     left join "STUDENT_SKILL" SS on S."ID" = SS."STU_ID" 
     left join "SKILLS" SK on SS."SKILL_ID" = SK."ID"
@@ -604,9 +617,7 @@ def search_students_by_skill(term):
 
     connection = db.connect(url)
     cursor = connection.cursor()
-    statement = """select 
-    id,name,university,department,faculty,student_city,preferred_emp,grade,age,
-    ARRAY_AGG( concat(skills."NAME", ':' ,skills."DESCRIPTION")) as skill_list
+    statement = """select  *
     from (select 
     S."ID" as id,
     S."NAME" as name,
@@ -614,21 +625,20 @@ def search_students_by_skill(term):
     D."NAME" as department,
     D."FACULTY" as faculty,
     C."NAME" as student_city,
+    S."EMP_PREF" as preferred_emp,
     S."GRADE" as grade,
     S."AGE" as age,
-    S."EMP_PREF" as preferred_emp
+	ARRAY_AGG( concat(SK."ID",':',SK."NAME", ':' ,SK."DESCRIPTION")) as skill_list
     from "STUDENTS" S 
     left join "STUDENT_SKILL" SS on S."ID" = SS."STU_ID" 
     left join "SKILLS" SK on SS."SKILL_ID" = SK."ID"
     left join "UNIVERSITIES" U on U."ID"=S."UNIVERSITY"
     left join "DEPARTMENTS" D on D."ID"=S."DEPARTMENT"
     left join "CITIES" C on 	C."ID"=S."CITY"
-    where SK."NAME" ilike '%{t}%' or SK."DESCRIPTION" ilike '%{t}%'
     GROUP BY S."ID",S."NAME",U."NAME",D."NAME",D."FACULTY",C."NAME",S."EMP_PREF"
     ) as res 
-    inner join "STUDENT_SKILL" SS1 on id = SS1."STU_ID"
-    inner join "SKILLS" skills on SS1."SKILL_ID" = skills."ID"
-    GROUP BY id,name,university,department,faculty,student_city,preferred_emp,grade,age;
+    
+	where  array_to_string(skill_list, ',') ilike '%{t}%'
     """.format(t=term)
     cursor.execute(statement)
     results = cursor.fetchall()
@@ -649,31 +659,28 @@ def search_students_by_skill_ids(ids):
         key = tuple(key)
     connection = db.connect(url)
     cursor = connection.cursor()
-    statement = """select 
-    id,name,university,department,faculty,student_city,preferred_emp,grade,age,
-    ARRAY_AGG( concat(skills."NAME", ':' ,skills."DESCRIPTION")) as skill_list
+    statement = """select  *
     from (select 
     S."ID" as id,
     S."NAME" as name,
-    S."EMP_PREF" as preferred_emp,
     U."NAME" as university,
     D."NAME" as department,
     D."FACULTY" as faculty,
     C."NAME" as student_city,
+    S."EMP_PREF" as preferred_emp,
     S."GRADE" as grade,
-    S."AGE" as age
+    S."AGE" as age,
+	ARRAY_AGG( concat(SK."ID",':',SK."NAME", ':' ,SK."DESCRIPTION")) as skill_list,
+    ARRAY_AGG(SK."ID") as skill_ids
     from "STUDENTS" S 
     left join "STUDENT_SKILL" SS on S."ID" = SS."STU_ID" 
     left join "SKILLS" SK on SS."SKILL_ID" = SK."ID"
     left join "UNIVERSITIES" U on U."ID"=S."UNIVERSITY"
     left join "DEPARTMENTS" D on D."ID"=S."DEPARTMENT"
     left join "CITIES" C on 	C."ID"=S."CITY"
-    where SK."ID" in {}
     GROUP BY S."ID",S."NAME",U."NAME",D."NAME",D."FACULTY",C."NAME",S."EMP_PREF"
     ) as res 
-    inner join "STUDENT_SKILL" SS1 on id = SS1."STU_ID"
-    inner join "SKILLS" skills on SS1."SKILL_ID" = skills."ID"
-    GROUP BY id,name,university,department,faculty,student_city,preferred_emp,grade,age;
+    where ARRAY{} && skill_ids
     """.format(key)
     cursor.execute(statement)
     results = cursor.fetchall()
@@ -817,8 +824,7 @@ def get_all_jobs():
     CT."NAME" AS CITY,
     CT."COUNTRY" AS COUNTRY,
     JB."EMP_PREF" AS type,
-    ARRAY_AGG( concat(SK."NAME", ':' ,SK."DESCRIPTION")) as skill_list,
-    ARRAY_AGG(SK."ID") as skill_ids
+    ARRAY_AGG( concat(SK."ID",':',SK."NAME", ':' ,SK."DESCRIPTION")) as skill_list
     FROM "JOB_LISTINGS" AS JB
     INNER JOIN "COMPANIES" AS C ON C."ID"=JB."COMPANY"
     INNER JOIN "CITIES" AS CT ON JB."LOCATION"=CT."ID"
@@ -876,7 +882,7 @@ def search_jobs_by_skill_ids(ids):
     CT."NAME" AS CITY,
     CT."COUNTRY" AS COUNTRY,
     JB."EMP_PREF" AS type,
-    ARRAY_AGG( concat(SK."NAME", ':' ,SK."DESCRIPTION")) as skill_list,
+    ARRAY_AGG( concat(SK."ID",':',SK."NAME", ':' ,SK."DESCRIPTION")) as skill_list,
     ARRAY_AGG(SK."ID") as skill_ids
     FROM "JOB_LISTINGS" AS JB
     INNER JOIN "COMPANIES" AS C ON C."ID"=JB."COMPANY"
@@ -902,7 +908,7 @@ def search_jobs(term):
     CT."NAME" AS CITY,
     CT."COUNTRY" AS COUNTRY,
     JB."EMP_PREF" AS type,
-    ARRAY_AGG( concat(SK."NAME", ':' ,SK."DESCRIPTION")) as skill_list,
+    ARRAY_AGG( concat(SK."ID",':',SK."NAME", ':' ,SK."DESCRIPTION")) as skill_list,
     ARRAY_AGG(SK."ID") as skill_ids
     FROM "JOB_LISTINGS" AS JB
     INNER JOIN "COMPANIES" AS C ON C."ID"=JB."COMPANY"
