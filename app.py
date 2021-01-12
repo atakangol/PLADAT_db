@@ -596,6 +596,23 @@ def company_update():
     }
     return jsonify(ret)
 
+@app.route('/company_detail',methods=['GET'])
+def company_detail():
+    company_id = request.args.get('company_id')
+    res = db_functions.get_company_details(company_id)
+    ret = {
+        "id":res[0],
+        "email": res[1],
+        "name":res[2],
+        "city":res[3],
+        "excid":res[4],
+        "excname":res[5],
+        "excdob":res[6],
+    }
+    return jsonify(ret)
+
+
+
 if __name__ == "__main__":
     app.run(debug=True,port=9090)
 
