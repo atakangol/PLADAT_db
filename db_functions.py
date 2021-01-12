@@ -687,12 +687,12 @@ def search_students_by_skill_ids(ids):
     return(results)
 
 #company profile
-def company_signup(email,name,password, excid, excname, excdob):
+def company_signup(email,name,password):
     connection = db.connect(url)
     cursor = connection.cursor()
     statement = """INSERT INTO public."COMPANIES"(
-	"EMAIL", "PASSWORD", "NAME","EXC_ID", "EXC_NAME", "EXC_DOB")
-	VALUES ('{}', '{}','{}',  '{}', '{}', '{}') RETURNING "ID" ;""".format(email,password,name, excid, excname, excdob)
+	"EMAIL", "PASSWORD", "NAME")
+	VALUES ('{}', '{}','{}') RETURNING "ID" ;""".format(email,password,name)
     try:
         cursor.execute(statement)
         id = cursor.fetchone()
@@ -713,15 +713,12 @@ def is_verified_company(v):
     v = True
     return v
 
-def company_login(email,pw, verification ):
+def company_login(email,pw):
     connection = db.connect(url)
     cursor = connection.cursor()
     statement = """SELECT "ID" FROM public."COMPANIES" where "EMAIL" = '{}' and "PASSWORD"='{}';""".format(email,pw)
     cursor.execute(statement)
     result = cursor.fetchone()
-    if is_verified_company(verification) == False :
-        print('company not verified')
-        return (False,int(result[0]))
     if result:
         return (True,int(result[0]))
     statement = """SELECT "ID" FROM public."COMPANIES" where "EMAIL" = '{}' ;""".format(email)
@@ -755,6 +752,25 @@ def update_company_city(company_id,city_id):
         cursor.close()
         connection.close()
     return (flag,id)
+
+def update_company_profile(company_id, excid, excname, excdob):
+    connection = db.connect(url)
+    cursor = connection.cursor()
+    statement = """UPDATE public."COMPANIES"
+	SET "EXC_ID"={}, "EXC_NAME"={},"EXC_DOB"={}
+	WHERE "ID"={} returning "ID";""".format(excid, excname, excdob,company_id)
+    cursor.execute(statement)
+    res = cursor.fetchall()
+    connection.commit()
+    try:
+        flag= True
+    except:
+        print( "no company with this id" )
+        flag=False
+    cursor.close()
+    connection.close()
+    return (flag,company_id)
+
 
 #job listings
 def add_job_listing(company_id,pref, description=None):
