@@ -784,7 +784,66 @@ def add_job_listing(company_id,pref, description=None):
     finally:
         cursor.close()
         connection.close()
+def add_job_req(job_id,skill_id):
+    connection = db.connect(url)
+    cursor = connection.cursor()
+    statement = """INSERT INTO public."JOB_REQ"(
+	"JOB_ID", "REQ_ID")
+	VALUES ({}, {}) RETURNING "ID";""".format(job_id,skill_id)
+    try:
+        cursor.execute(statement)
+        res = cursor.fetchall()
+        #print(len(res))
+        connection.commit()
+        flag = True
+        try:
+
+            id = res[0][0]
+        except:
+            print("no job with this id" )
+            #return (false,student_id)
+            id=job_id
+            flag=False
+
+    except Exception as err:
+        # pass exception to function
+        #print_psycopg2_exception(err)
+        if (err.pgcode == "23503"):
+            print("this skill or job doesnt exist")
+            id=-1
+            flag=False
+        if (err.pgcode == "23505"):
+            print("this job already has this skill")
+            id=-1
+            flag=False
+        id=-1
+        flag=False
     
+    #print(id)
+    finally:
+        cursor.close()
+        connection.close()
+        
+    return (flag,id)
+def remove_job_req(job_id,skill_id):
+    connection = db.connect(url)
+    cursor = connection.cursor()
+    statement = """DELETE FROM public."JOB_REQ"
+	WHERE "JOB_ID"={} AND "REQ_ID"={};""".format(job_id,skill_id)
+    try:
+        cursor.execute(statement)
+        connection.commit()
+        flag = True
+    except Exception as err:
+        # pass exception to function
+        print_psycopg2_exception(err)
+        flag=False
+    finally:
+        cursor.close()
+        connection.close()
+        
+    return flag
+  
 def update_joblisting_location(joblisting_id,city_id):
     connection = db.connect(url)
     cursor = connection.cursor()
@@ -833,6 +892,29 @@ def get_all_jobs():
     GROUP BY ID,COMPANY_ID,DESCRIPTION,COMPANY_NAME,CITY,COUNTRY """
     cursor.execute(statement)
     results = cursor.fetchall()
+    return results
+def get_job_details(job_id):
+    ''' job_id,company_id,job_desc,company_name,city,country,skill_list '''
+    connection = db.connect(url)
+    cursor = connection.cursor()
+    statement = """ SELECT 
+    JB."ID" ID,
+    JB."COMPANY" AS COMPANY_ID,
+    JB."DESCRIPTION" DESCRIPTION,
+    C."NAME" AS COMPANY_NAME,
+    CT."NAME" AS CITY,
+    CT."COUNTRY" AS COUNTRY,
+    JB."EMP_PREF" AS type,
+    ARRAY_AGG( concat(SK."ID",':',SK."NAME", ':' ,SK."DESCRIPTION")) as skill_list
+    FROM "JOB_LISTINGS" AS JB
+    INNER JOIN "COMPANIES" AS C ON C."ID"=JB."COMPANY"
+    INNER JOIN "CITIES" AS CT ON JB."LOCATION"=CT."ID"
+    LEFT JOIN "JOB_REQ" AS JQ ON JQ."JOB_ID"=JB."ID"
+    LEFT JOIN "SKILLS" AS SK ON SK."ID"=JQ."REQ_ID"
+	where JB."ID"={}
+    GROUP BY ID,COMPANY_ID,DESCRIPTION,COMPANY_NAME,CITY,COUNTRY """.format(job_id)
+    cursor.execute(statement)
+    results = cursor.fetchone()
     return results
 def search_jobs_by_skill(term):
     connection = db.connect(url)
@@ -1055,6 +1137,4 @@ if __name__ == "__main__":
     #print(search_jobs_by_skill_ids("1,4"))
     #print(delete_application(8,2))
     #print(new_application(8,2,False))
-
-   for ii in get_applications_of_student(4):
-       print(ii)
+    print(remove_job_req(4,1))

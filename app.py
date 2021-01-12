@@ -384,6 +384,42 @@ def all_jobs():
         
     ret = {"jobs":t }
     return (jsonify(ret))
+@app.route("/edit_job_req",methods=["POST"])
+def edit_job_req():   
+    att = request.args.get("type")
+    if att == "add":
+
+        job_id = request.args.get('job_id')
+        skill_id = request.args.get('skill_id')
+        res = db_functions.add_job_req(job_id,skill_id)
+    elif att=="del":
+        job_id = request.args.get('job_id')
+        skill_id = request.args.get('skill_id')
+        res = db_functions.remove_job_req(job_id,skill_id)
+    else:
+        return jsonify({"flag":False})
+    
+    ret = {
+        "flag":res
+    }
+    return jsonify(ret)
+@app.route("/job_details",methods=["GET"])
+def job_details():
+    job_id = request.args.get('job_id')
+    res = db_functions.get_job_details(job_id)
+
+    ret = {
+        "id":res[0],
+        "company_id": res[1],
+        "job_desc":res[2],  
+        "company_name":res[3],
+        "city":res[4],
+        "country":res[5],
+        "emp_type":res[6],
+        "skill_list":db_functions.skill_format(res[7])
+    }
+    return ret
+
 @app.route('/search_jobs_by_skill',methods=["GET"])
 def search_jobs_by_skill():
     term = request.args.get('term')
