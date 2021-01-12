@@ -771,6 +771,26 @@ def update_company_profile(company_id, excid, excname, excdob):
     connection.close()
     return (flag,company_id)
 
+def get_company_details(company_id): 
+    connection = db.connect(url)
+    cursor = connection.cursor()    
+    statement ="""select 
+    C."ID" as id,
+    C."EMAIL" as email,
+    C."NAME" as name,
+    C."CITY" as city,
+    C."EXC_ID" as excid,
+    C."EXC_NAME" as excname,
+    C."EXC_DOB" as excdob
+    from "COMPANIES" C 
+	where C."ID" = {}
+    """.format(company_id)
+    cursor.execute(statement)
+    result = cursor.fetchone()
+    return(result)
+
+
+
 
 #job listings
 def add_job_listing(company_id,pref, description=None):
