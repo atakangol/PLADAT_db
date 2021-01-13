@@ -781,9 +781,15 @@ def get_company_details(company_id):
     C."CITY" as city,
     C."EXC_ID" as excid,
     C."EXC_NAME" as excname,
-    C."EXC_DOB" as excdob
+    C."EXC_DOB" as excdob,
+	--ARRAY_AGG( concat(SK."ID",':',SK."NAME", ':' ,SK."DESCRIPTION")) as skill_list
+	ARRAY_AGG( JB."ID") as job_list
     from "COMPANIES" C 
+	left join "JOB_LISTINGS" as JB on JB."COMPANY" = C."ID"
+	--left join "JOB_REQ" AS JQ ON JQ."JOB_ID" = JB."ID"
+	--left join "SKILLS" AS SK ON JQ."REQ_ID" = SK."ID"
 	where C."ID" = {}
+	GROUP BY id,email,name,excid,excname,excdob
     """.format(company_id)
     cursor.execute(statement)
     result = cursor.fetchone()

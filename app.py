@@ -608,6 +608,7 @@ def company_detail():
         "excid":res[4],
         "excname":res[5],
         "excdob":res[6],
+        "job_lis":res[7]
     }
     return jsonify(ret)
 
