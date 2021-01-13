@@ -757,7 +757,7 @@ def update_company_profile(company_id, excid, excname, excdob):
     connection = db.connect(url)
     cursor = connection.cursor()
     statement = """UPDATE public."COMPANIES"
-	SET "EXC_ID"={}, "EXC_NAME"={},"EXC_DOB"={}
+	SET "EXC_ID"={}, "EXC_NAME"='{}',"EXC_DOB"='{}'
 	WHERE "ID"={} returning "ID";""".format(excid, excname, excdob,company_id)
     cursor.execute(statement)
     res = cursor.fetchall()
