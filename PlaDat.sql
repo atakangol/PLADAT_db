@@ -67,7 +67,7 @@ CREATE TABLE "JOB_REQ" (
 
 CREATE TABLE "SKILLS" (
   "ID" serial PRIMARY KEY,
-  "NAME" varchar UNIQUE,
+  "NAME" varchar ,
   "DESCRIPTION" varchar
 );
 

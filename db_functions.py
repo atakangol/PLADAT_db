@@ -897,21 +897,60 @@ def update_joblisting_location(joblisting_id,city_id):
         res = cursor.fetchall()
         connection.commit()
         flag = True
-        try:
-            id = res[0][0]
-        except:
-            id=student_id
-            flag=False
     except Exception as err:
-        if (err.pgcode == "23503"):
-            print("No city with this id found")
-            id=-1
-            flag=False
+        flag = False
+        print_psycopg2_exception(err)
     finally:
         cursor.close()
         connection.close()
-    return (flag,id)
+    return (flag)
+def update_joblisting_description(joblisting_id,new_desc):
+    connection = db.connect(url)
+    cursor = connection.cursor()
+    statement = """UPDATE public."JOB_LISTINGS"
+	SET "DESCRIPTION"='{}'
+	WHERE "ID"={} returning "ID";""".format(new_desc,joblisting_id)
+    try:
+        cursor.execute(statement)
+        res = cursor.fetchall()
+        connection.commit()
+        flag = True
+    except Exception as err:
+        print_psycopg2_exception(err)
+        flag=False
+    finally:
+        cursor.close()
+        connection.close()
+    return (flag)
+def update_joblisting_pref(joblisting_id,pref):
+    connection = db.connect(url)
+    cursor = connection.cursor()
+    statement = """UPDATE public."JOB_LISTINGS"
+	SET "EMP_PREF"='{}'
+	WHERE "ID"={} returning "ID";""".format(pref,joblisting_id)
+    try:
+        cursor.execute(statement)
+        res = cursor.fetchall()
+        connection.commit()
+        flag = True
+    except Exception as err:
+        print_psycopg2_exception(err)
+        flag=False
+    finally:
+        cursor.close()
+        connection.close()
+    return (flag)
 
+def delete_job(joblisting_id):
+    statement = """ delete from "JOB_REQ" WHERE "JOB_ID" = {j};
+    DELETE FROM "JOB_LISTINGS" WHERE "ID" ={j} ;""".format(j = joblisting_id)
+    connection = db.connect(url)
+    cursor = connection.cursor()
+    cursor.execute(statement)
+    connection.commit()
+    cursor.close()
+    connection.close()
+    return True
 
 def get_all_jobs():
     ''' job_id,company_id,job_desc,company_name,city,country,skill_list '''

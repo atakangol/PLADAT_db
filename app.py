@@ -88,7 +88,7 @@ def stu_detail():
 @app.route('/cities',methods=["GET"])
 def cities():
     city_id = request.args.get('id')
-    if id:
+    if id == "None":
         res = db_functions.get_city(city_id)
         ret = {"cities": [ {"id":res[0],
                 "name": res[2],
@@ -396,6 +396,33 @@ def edit_job_req():
         job_id = request.args.get('job_id')
         skill_id = request.args.get('skill_id')
         res = db_functions.remove_job_req(job_id,skill_id)
+    else:
+        return jsonify({"flag":False})
+    
+    ret = {
+        "flag":res
+    }
+    return jsonify(ret)
+@app.route("/edit_job",methods=["POST"])
+def edit_job():   
+    att = request.args.get("type")
+    if att == "del":
+
+        job_id = request.args.get('job_id')
+        res = db_functions.delete_job(job_id)
+    elif att=="loc":
+        job_id = request.args.get('job_id')
+        city_id = request.args.get('city_id')
+        res = db_functions.update_joblisting_location(job_id,city_id)
+    elif att=="desc":
+        job_id = request.args.get('job_id')
+        desc = request.args.get('desc')
+        res = db_functions.update_joblisting_description(job_id,desc)
+    elif att=="pref":
+        job_id = request.args.get('job_id')
+        pref = request.args.get('emp_type')
+        res = db_functions.update_joblisting_pref(job_id,pref)
+    
     else:
         return jsonify({"flag":False})
     
