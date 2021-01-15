@@ -654,9 +654,9 @@ def search_students_by_skill_ids(ids):
         key.append(int(ii))
     
     if len(key)==1:
-        key = "("+str(key[0]) + ")"
+        key = "["+str(key[0]) + "]"
     else:
-        key = tuple(key)
+        key = list(key)
     connection = db.connect(url)
     cursor = connection.cursor()
     statement = """select  *
@@ -735,14 +735,10 @@ def update_company_city(company_id,city_id):
 	WHERE "ID"={} returning "ID";""".format(city_id,company_id)
     try:
         cursor.execute(statement)
-        res = cursor.fetchall()
+        
         connection.commit()
         flag = True
-        try:
-            id = res[0][0]
-        except:
-            id=student_id
-            flag=False
+       
     except Exception as err:
         if (err.pgcode == "23503"):
             print("No city with this id found")
