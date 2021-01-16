@@ -747,7 +747,7 @@ def update_company_city(company_id,city_id):
     finally:
         cursor.close()
         connection.close()
-    return (flag,id)
+    return flag
 
 def update_company_profile(company_id, excid, excname, excdob):
     connection = db.connect(url)

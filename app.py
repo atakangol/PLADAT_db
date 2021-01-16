@@ -603,7 +603,7 @@ def company_update_city():
     company_id = request.args.get('company_id')
     city_id = request.args.get('city_id')
     res = db_functions.update_company_city(company_id,city_id)
-    ret = {"flag":res[0],"id":res[1]}
+    ret = {"flag":res}
     return jsonify(ret)
 
 
