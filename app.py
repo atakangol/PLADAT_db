@@ -603,7 +603,7 @@ def company_update_city():
     company_id = request.args.get('company_id')
     city_id = request.args.get('city_id')
     res = db_functions.update_company_city(company_id,city_id)
-    ret = {"flag":res[0],"id":res[1]}
+    ret = {"flag":res}
     return jsonify(ret)
 
 
@@ -628,7 +628,7 @@ def company_detail():
         "id":res[0],
         "email": res[1],
         "name":res[2],
-        "city":res[3],
+        "city_id":res[3],
         "excid":res[4],
         "excname":res[5],
         "excdob":res[6],
