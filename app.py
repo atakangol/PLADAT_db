@@ -404,28 +404,25 @@ def edit_job_req():
     }
     return jsonify(ret)
 @app.route("/edit_job",methods=["POST"])
-def edit_job():   
-    att = request.args.get("type")
-    if att == "del":
+def edit_job():
+    job_id = request.args.get('job_id')
+   
+    city_id = request.args.get('city_id')
 
-        job_id = request.args.get('job_id')
-        res = db_functions.delete_job(job_id)
-    elif att=="loc":
-        job_id = request.args.get('job_id')
-        city_id = request.args.get('city_id')
-        res = db_functions.update_joblisting_location(job_id,city_id)
-    elif att=="desc":
-        job_id = request.args.get('job_id')
-        desc = request.args.get('desc')
-        res = db_functions.update_joblisting_description(job_id,desc)
-    elif att=="pref":
-        job_id = request.args.get('job_id')
-        pref = request.args.get('emp_type')
-        res = db_functions.update_joblisting_pref(job_id,pref)
+    desc = request.args.get('desc')
+
+    pref = request.args.get('emp_type')
+    res = db_functions.update_job(job_id,city_id,desc,pref)
+
     
-    else:
-        return jsonify({"flag":False})
-    
+    ret = {
+        "flag":res
+    }
+    return jsonify(ret)
+@app.route("/delete_job",methods=["POST"])
+def delete_job():
+    job_id = request.args.get('job_id')
+    res = db_functions.delete_job(job_id)
     ret = {
         "flag":res
     }

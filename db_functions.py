@@ -881,13 +881,13 @@ def remove_job_req(job_id,skill_id):
         connection.close()
         
     return flag
-  
-def update_joblisting_location(joblisting_id,city_id):
+
+def update_job(joblisting_id,city_id,new_desc,pref):
     connection = db.connect(url)
     cursor = connection.cursor()
     statement = """UPDATE public."JOB_LISTINGS"
-	SET "LOCATION"={}
-	WHERE "ID"={} returning "ID";""".format(city_id,joblisting_id)
+	SET "LOCATION"={},"DESCRIPTION" = '{}' , "EMP_PREF"='{}'
+	WHERE "ID"={} returning "ID";""".format(city_id,new_desc,pref,joblisting_id)
     try:
         cursor.execute(statement)
         res = cursor.fetchall()
@@ -900,46 +900,12 @@ def update_joblisting_location(joblisting_id,city_id):
         cursor.close()
         connection.close()
     return (flag)
-def update_joblisting_description(joblisting_id,new_desc):
-    connection = db.connect(url)
-    cursor = connection.cursor()
-    statement = """UPDATE public."JOB_LISTINGS"
-	SET "DESCRIPTION"='{}'
-	WHERE "ID"={} returning "ID";""".format(new_desc,joblisting_id)
-    try:
-        cursor.execute(statement)
-        res = cursor.fetchall()
-        connection.commit()
-        flag = True
-    except Exception as err:
-        print_psycopg2_exception(err)
-        flag=False
-    finally:
-        cursor.close()
-        connection.close()
-    return (flag)
-def update_joblisting_pref(joblisting_id,pref):
-    connection = db.connect(url)
-    cursor = connection.cursor()
-    statement = """UPDATE public."JOB_LISTINGS"
-	SET "EMP_PREF"='{}'
-	WHERE "ID"={} returning "ID";""".format(pref,joblisting_id)
-    try:
-        cursor.execute(statement)
-        res = cursor.fetchall()
-        connection.commit()
-        flag = True
-    except Exception as err:
-        print_psycopg2_exception(err)
-        flag=False
-    finally:
-        cursor.close()
-        connection.close()
-    return (flag)
 
 def delete_job(joblisting_id):
     statement = """ delete from "JOB_REQ" WHERE "JOB_ID" = {j};
-    DELETE FROM "JOB_LISTINGS" WHERE "ID" ={j} ;""".format(j = joblisting_id)
+    DELETE FROM "APPLICATIONS" WHERE "JOB_ID" ={j} ;
+    DELETE FROM "JOB_LISTINGS" WHERE "ID" ={j} ;
+    """.format(j = joblisting_id)
     connection = db.connect(url)
     cursor = connection.cursor()
     cursor.execute(statement)
