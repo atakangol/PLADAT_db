@@ -3,7 +3,14 @@ import db_functions
 
 app = Flask(__name__)
 
-
+@app.route("/create_tables",methods=['POST'])
+def create_tables():
+    db_functions.create_tables()
+    return True
+@app.route("/del_tables",methods=['POST'])
+def del_tables():
+    db_functions.drop_tables()
+    return True
 
 #student profile
 @app.route('/slogin',methods=['POST'])

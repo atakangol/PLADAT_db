@@ -43,6 +43,21 @@ def create_tables():
     connection.commit()
     cursor.close()
     connection.close()
+def drop_tables():
+    #temp_url = "dbname='PlaDat2' user='postgres' host='localhost' password='45581222'"
+    with open("DROP.sql","r") as sql:
+        temp = sql.readlines()
+    statement = ""
+    for ii in temp:
+        statement += ii +" "
+    print(statement)
+    
+    connection = db.connect(url)
+    cursor = connection.cursor()
+    cursor.execute(statement)
+    connection.commit()
+    cursor.close()
+    connection.close()
 
 def skill_format(l):
     #print()
@@ -900,7 +915,24 @@ def update_job(joblisting_id,city_id,new_desc,pref):
         cursor.close()
         connection.close()
     return (flag)
-
+def update_joblisting_location(job_id,city_id):
+    connection = db.connect(url)
+    cursor = connection.cursor()
+    statement = """UPDATE public."JOB_LISTINGS"
+	SET "LOCATION"={}
+	WHERE "ID"={} returning "ID";""".format(city_id,job_id)
+    try:
+        cursor.execute(statement)
+        res = cursor.fetchall()
+        connection.commit()
+        flag = True
+    except Exception as err:
+        flag = False
+        print_psycopg2_exception(err)
+    finally:
+        cursor.close()
+        connection.close()
+    return (flag)
 def delete_job(joblisting_id):
     statement = """ delete from "JOB_REQ" WHERE "JOB_ID" = {j};
     DELETE FROM "APPLICATIONS" WHERE "JOB_ID" ={j} ;
