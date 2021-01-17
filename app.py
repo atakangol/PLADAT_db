@@ -95,7 +95,7 @@ def stu_detail():
 @app.route('/cities',methods=["GET"])
 def cities():
     city_id = request.args.get('id')
-    if id == "None":
+    if city_id:
         res = db_functions.get_city(city_id)
         ret = {"cities": [ {"id":res[0],
                 "name": res[2],
